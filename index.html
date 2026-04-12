@@ -11,6 +11,11 @@
 </head>
 <body>
 
+<!-- Botón flotante de WhatsApp (solo móvil) -->
+<a href="#" id="whatsappFloatBtn" class="whatsapp-float" target="_blank">
+    <i class="fab fa-whatsapp"></i>
+</a>
+
 <div class="app-container">
     <header class="main-header">
         <div class="logo-area">
@@ -25,49 +30,77 @@
                 <i class="fab fa-whatsapp"></i>
                 <span>¿Querés estar en la Web?</span>
             </a>
+            <div class="hamburger-menu" id="hamburgerMenu">
+                <i class="fas fa-bars"></i>
+            </div>
         </div>
     </header>
 
-    <div class="tabs-container">
-        <button class="tab-btn active" data-tab="inicio" title="Ir al inicio">
-            <i class="fas fa-home"></i><span>Inicio</span>
-        </button>
-        <button class="tab-btn" data-tab="directorio" title="Buscar profesionales destacados">
-            <i class="fas fa-users"></i><span>Talentos</span>
-        </button>
-        <button class="tab-btn" data-tab="cotizador" title="Crear presupuesto personalizado">
-            <i class="fas fa-calculator"></i><span>Cotizar</span>
-        </button>
-        <button class="tab-btn" data-tab="precios" title="Ver tabla de precios por tarea">
-            <i class="fas fa-table-list"></i><span>Precios</span>
-        </button>
-        <button class="tab-btn" data-tab="jornales" title="Consultar jornales por categoría">
-            <i class="fas fa-coins"></i><span>Jornales</span>
-        </button>
-        
-        
+    <!-- Menú desplegable móvil -->
+    <div id="mobileMenu" class="mobile-menu">
+        <button class="mobile-tab-btn active" data-tab="inicio"><i class="fas fa-home"></i> Inicio</button>
+        <button class="mobile-tab-btn" data-tab="directorio"><i class="fas fa-users"></i> Talentos</button>
+        <button class="mobile-tab-btn" data-tab="cotizador"><i class="fas fa-calculator"></i> Cotizar</button>
+        <button class="mobile-tab-btn" data-tab="precios"><i class="fas fa-table-list"></i> Precios</button>
+        <button class="mobile-tab-btn" data-tab="jornales"><i class="fas fa-coins"></i> Jornales</button>
+    </div>
+
+    <!-- Tabs para escritorio -->
+    <div class="tabs-container desktop-tabs">
+        <button class="tab-btn active" data-tab="inicio"><i class="fas fa-home"></i><span>Inicio</span></button>
+        <button class="tab-btn" data-tab="directorio"><i class="fas fa-users"></i><span>Talentos</span></button>
+        <button class="tab-btn" data-tab="cotizador"><i class="fas fa-calculator"></i><span>Cotizar</span></button>
+        <button class="tab-btn" data-tab="precios"><i class="fas fa-table-list"></i><span>Precios</span></button>
+        <button class="tab-btn" data-tab="jornales"><i class="fas fa-coins"></i><span>Jornales</span></button>
     </div>
 
     <main class="main-content">
         <!-- INICIO -->
         <section id="inicio" class="tab-pane active">
-            <div class="hero-section">
-                <div class="hero-badge"><i class="fas fa-chart-line"></i> Precios actualizados Mayo 2026</div>
-                <h2>Costos reales de obra + <span class="gold">Talentos verificados</span></h2>
-                <p>Precios sugeridos Diedro vs. UOCRA. Encontrá profesionales destacados por reputación y confianza.</p>
-                <div class="hero-stats">
-                    <div class="stat-card"><i class="fas fa-chart-simple"></i><div><span>¡Nuevo!</span><small>  Base de Precios</small></div></div>
-                    <div class="stat-card"><i class="fas fa-star"></i><div><span>Recomendá</span><small>  Profesionales</small></div></div>
-                    <div class="stat-card"><i class="fas fa-coins"></i><div><span>+Categorias</span><small> Cada Semana</small></div></div>
+            <!-- Top 10 profesionales horizontal -->
+            <div class="top-horizontal-section">
+                <div class="section-title">
+                    <i class="fas fa-trophy"></i>
+                    <h3>Profesionales destacados</h3>
+                    <a href="#" id="verDirectorioLinkMovil" class="ver-todos">Ver todos →</a>
                 </div>
-                <div class="hero-buttons">
-                    <button class="btn-primary" id="heroCotizarBtn"><i class="fas fa-chart-line"></i> Cotizar Actividades ahora</button>
+                <div id="topProfesionalesHorizontal" class="profesionales-horizontal">
+                    <div class="loading-spinner">Cargando...</div>
+                </div>
+            </div>
+
+            <!-- Tarjeta descarga PDF -->
+            <div class="pdf-download-card">
+                <div class="pdf-icon"><i class="fas fa-file-pdf"></i></div>
+                <div class="pdf-info">
+                    <h3>📄 Descargá los precios actualizados</h3>
+                    <p>Comparativa oficial: UOCRA vs Precio Sugerido Diedro. Base para cotizar tus trabajos.</p>
+                </div>
+                <a href="#" id="descargaPDFConvenioHero" class="btn-pdf-download"><i class="fas fa-download"></i> Descargar PDF</a>
+            </div>
+
+            <!-- Tarjeta informativa -->
+            <div class="info-card-diedro">
+                <i class="fas fa-chart-line"></i>
+                <h4>¿Por qué Precio Sugerido Diedro?</h4>
+                <p>Relevamiento directo de mercado: precios reales de la calle, actualizados mensualmente. Ayudamos a profesionales a cobrar lo justo y a clientes a conocer costos transparentes.</p>
+            </div>
+
+            <!-- Banner azul oscuro -->
+            <div class="banner-azul">
+                <div class="banner-stats">
+                    <div class="banner-stat"><i class="fas fa-chart-simple"></i> <span>+200</span> <small>precios actualizados</small></div>
+                    <div class="banner-stat"><i class="fas fa-star"></i> <span>Top 5%</span> <small>talentos verificados</small></div>
+                    <div class="banner-stat"><i class="fas fa-coins"></i> <span>+30</span> <small>categorías</small></div>
+                </div>
+                <div class="banner-buttons">
+                    <button class="btn-primary" id="heroCotizarBtn"><i class="fas fa-chart-line"></i> Cotizar ahora</button>
                     <button class="btn-secondary" id="heroDirectorioBtn"><i class="fas fa-briefcase"></i> Buscar talento</button>
                 </div>
             </div>
 
-            <!-- Calculadora rápida de jornales -->
-            <div class="home-calculator">
+            <!-- Calculadora rápida dark -->
+            <div class="home-calculator dark-calculator">
                 <div class="section-title">
                     <i class="fas fa-calculator"></i>
                     <h3>Calculadora rápida de mano de obra</h3>
@@ -91,33 +124,6 @@
                         <div class="result-item total"><span>Total por 1 día(s):</span><strong>$0</strong></div>
                     </div>
                     <button class="btn-calc-action" id="aplicarCalculoBtn"><i class="fas fa-file-invoice"></i> Usar en cotizador</button>
-                </div>
-            </div>
-
-            <!-- Top 3 profesionales destacados -->
-            <div class="home-top-profesionales">
-                <div class="section-title">
-                    <i class="fas fa-trophy"></i>
-                    <h3>Top profesionales destacados</h3>
-                    <a href="#" id="verDirectorioLink" class="ver-todos">Ver todos →</a>
-                </div>
-                <div id="topProfesionalesContainer" class="top-profesionales-grid">
-                    <div class="loading-spinner">Cargando...</div>
-                </div>
-            </div>
-
-            <!-- Info descargas -->
-            <div class="info-grid">
-                <div class="info-card">
-                    <i class="fas fa-file-pdf"></i>
-                    <h4>Convenio Colectivo UOCRA 76/75</h4>
-                    <p>Descargá las escalas salariales oficiales actualizadas.</p>
-                    <a href="#" class="link-gold" id="descargaPDFConvenio">Descargar PDF →</a>
-                </div>
-                <div class="info-card">
-                    <i class="fas fa-chart-line"></i>
-                    <h4>¿Por qué Precio Sugerido Diedro?</h4>
-                    <p>Relevamiento directo de mercado: precios reales de la calle.</p>
                 </div>
             </div>
         </section>
@@ -150,7 +156,7 @@
             <div class="jornales-footer"><p><i class="fas fa-calendar-alt"></i> Actualización: Mayo 2026 | Fuente: Convenio UOCRA 76/75 y relevamiento Diedro</p></div>
         </section>
 
-        <!-- DIRECTORIO COMPLETO -->
+        <!-- SECCIÓN DIRECTORIO COMPLETO -->
         <section id="directorio" class="tab-pane">
             <div class="section-header">
                 <h2><i class="fas fa-user-astronaut"></i> Talentos destacados</h2>
@@ -174,8 +180,8 @@
             <div id="directorioContainer" class="directorio-grid"></div>
         </section>
 
-        <!-- COTIZADOR -->
-        <section id="cotizador" class="tab-pane">
+        <!-- COTIZADOR (modo dark) -->
+        <section id="cotizador" class="tab-pane dark-cotizador">
             <div class="cotizador-grid">
                 <div class="tareas-panel">
                     <div class="panel-header"><h3><i class="fas fa-list-check"></i> Seleccioná tareas</h3></div>
@@ -202,7 +208,7 @@
     </footer>
 </div>
 
-<!-- Modal para vista detallada del profesional (solo móvil) -->
+<!-- Modal -->
 <div id="profesionalModal" class="modal">
     <div class="modal-content">
         <span class="modal-close">&times;</span>
@@ -211,5 +217,47 @@
 </div>
 
 <script src="script.js"></script>
+<script>
+    // Manejo del botón "atrás" en móvil
+    (function() {
+        let allowExit = false;
+        function goToHome() {
+            const activePane = document.querySelector('.tab-pane.active');
+            if (activePane && activePane.id !== 'inicio') {
+                const inicioTab = document.querySelector('.tab-btn[data-tab="inicio"]');
+                const mobileInicioBtn = document.querySelector('.mobile-tab-btn[data-tab="inicio"]');
+                if (inicioTab) inicioTab.click();
+                if (mobileInicioBtn) mobileInicioBtn.click();
+                return true;
+            }
+            return false;
+        }
+        window.addEventListener('popstate', function(event) {
+            if (goToHome()) {
+                history.pushState(null, null, window.location.href);
+                allowExit = false;
+            } else {
+                if (!allowExit) {
+                    history.pushState(null, null, window.location.href);
+                    allowExit = true;
+                }
+            }
+        });
+        history.pushState(null, null, window.location.href);
+    })();
+
+    document.getElementById('whatsappFloatBtn')?.addEventListener('click', (e) => {
+        e.preventDefault();
+        const numero = "5493875048697";
+        const mensaje = "Hola, quiero más información para aparecer en el directorio Diedro";
+        window.open(`https://wa.me/${numero}?text=${encodeURIComponent(mensaje)}`, "_blank");
+    });
+    document.getElementById('contactoProfesionalBtn')?.addEventListener('click', (e) => {
+        e.preventDefault();
+        const numero = "5493875048697";
+        const mensaje = "Hola, quiero más información para aparecer en el directorio Diedro";
+        window.open(`https://wa.me/${numero}?text=${encodeURIComponent(mensaje)}`, "_blank");
+    });
+</script>
 </body>
 </html>
