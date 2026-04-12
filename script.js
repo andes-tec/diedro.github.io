@@ -1,4 +1,4 @@
-// ================= CONFIGURACIÓN: URLs de Google Sheets (publicadas como CSV) =================
+// ================= CONFIGURACIÓN: URLs de Google Sheets =================
 const PROFESIONALES_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTx3AHpmzmLegZxB6Cr_gY9iD3D_LGBHO2GK2MIBdS4Ts1makgdpX9LwzNDLMeG0CoiGUCCZNdP6d-t/pub?gid=0&single=true&output=csv";
 const PRECIOS_CSV_URL      = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTx3AHpmzmLegZxB6Cr_gY9iD3D_LGBHO2GK2MIBdS4Ts1makgdpX9LwzNDLMeG0CoiGUCCZNdP6d-t/pub?gid=798155947&single=true&output=csv";
 const JORNALES_CSV_URL     = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTx3AHpmzmLegZxB6Cr_gY9iD3D_LGBHO2GK2MIBdS4Ts1makgdpX9LwzNDLMeG0CoiGUCCZNdP6d-t/pub?gid=1835644096&single=true&output=csv";
@@ -114,7 +114,14 @@ function getDefaultProfesionales() {
     return [
         { id: "1", nombre: "Juan Pérez", oficio: "Albañil", descripcion: "15 años de experiencia. Refacciones integrales.", estrellas: 5, puntos: 350, zona: "Palermo", whatsapp: "5491112345678", imagen: "https://randomuser.me/api/portraits/men/1.jpg", estado: "premium" },
         { id: "2", nombre: "María González", oficio: "Arquitecta", descripcion: "Diseño y dirección de obra.", estrellas: 5, puntos: 420, zona: "Belgrano", whatsapp: "5491123456789", imagen: "https://randomuser.me/api/portraits/women/2.jpg", estado: "premium" },
-        { id: "3", nombre: "Roberto Sánchez", oficio: "Electricista", descripcion: "Instalaciones eléctricas.", estrellas: 4, puntos: 280, zona: "Nuñez", whatsapp: "5491134567890", imagen: "https://randomuser.me/api/portraits/men/3.jpg", estado: "destacado" }
+        { id: "3", nombre: "Roberto Sánchez", oficio: "Electricista", descripcion: "Instalaciones eléctricas.", estrellas: 4, puntos: 280, zona: "Nuñez", whatsapp: "5491134567890", imagen: "https://randomuser.me/api/portraits/men/3.jpg", estado: "destacado" },
+        { id: "4", nombre: "Carlos Gómez", oficio: "Plomero", descripcion: "Reparaciones e instalaciones.", estrellas: 4, puntos: 310, zona: "Caballito", whatsapp: "5491145678901", imagen: "https://randomuser.me/api/portraits/men/4.jpg", estado: "confiable" },
+        { id: "5", nombre: "Lucía Fernández", oficio: "Pintora", descripcion: "Pintura interior y exterior.", estrellas: 5, puntos: 390, zona: "San Telmo", whatsapp: "5491156789012", imagen: "https://randomuser.me/api/portraits/women/5.jpg", estado: "premium" },
+        { id: "6", nombre: "Diego Morales", oficio: "Soldador", descripcion: "Estructuras metálicas.", estrellas: 4, puntos: 330, zona: "Flores", whatsapp: "5491167890123", imagen: "https://randomuser.me/api/portraits/men/6.jpg", estado: "destacado" },
+        { id: "7", nombre: "Laura Díaz", oficio: "Canaletero", descripcion: "Instalación de canaletas.", estrellas: 4, puntos: 290, zona: "Liniers", whatsapp: "5491178901234", imagen: "https://randomuser.me/api/portraits/women/7.jpg", estado: "confiable" },
+        { id: "8", nombre: "Fernando López", oficio: "Durlero", descripcion: "Tabiques de durlock.", estrellas: 5, puntos: 410, zona: "Devoto", whatsapp: "5491189012345", imagen: "https://randomuser.me/api/portraits/men/8.jpg", estado: "premium" },
+        { id: "9", nombre: "Gabriela Ruiz", oficio: "Contratista", descripcion: "Proyectos integrales.", estrellas: 5, puntos: 450, zona: "Recoleta", whatsapp: "5491190123456", imagen: "https://randomuser.me/api/portraits/women/9.jpg", estado: "premium" },
+        { id: "10", nombre: "Martín Acosta", oficio: "Ayudante", descripcion: "Asistente en obra.", estrellas: 3, puntos: 180, zona: "Constitución", whatsapp: "5491201234567", imagen: "https://randomuser.me/api/portraits/men/10.jpg", estado: "crecimiento" }
     ];
 }
 
@@ -122,7 +129,9 @@ function getDefaultPrecios() {
     return [
         { id: "1", categoria: "Albañilería", tarea: "Muro ladrillo hueco", unidad: "m²", precioUocra: 5200, precioDiedro: 7800 },
         { id: "2", categoria: "Albañilería", tarea: "Revoque grueso", unidad: "m²", precioUocra: 3100, precioDiedro: 4500 },
-        { id: "3", categoria: "Electricidad", tarea: "Toma corriente", unidad: "punto", precioUocra: 3500, precioDiedro: 5200 }
+        { id: "3", categoria: "Electricidad", tarea: "Toma corriente", unidad: "punto", precioUocra: 3500, precioDiedro: 5200 },
+        { id: "4", categoria: "Plomería", tarea: "Instalación de grifería", unidad: "unidad", precioUocra: 2800, precioDiedro: 4200 },
+        { id: "5", categoria: "Pintura", tarea: "Pintura látex", unidad: "m²", precioUocra: 1800, precioDiedro: 2700 }
     ];
 }
 
@@ -130,11 +139,12 @@ function getDefaultJornales() {
     return [
         { categoria: "Oficial Especializado", nivel: "Categoría A", descripcion: "Albañil especializado", jornalUocra: 38500, jornalDiedro: 52000 },
         { categoria: "Oficial", nivel: "Categoría B", descripcion: "Albañil con experiencia", jornalUocra: 34800, jornalDiedro: 47000 },
-        { categoria: "Medio Oficial", nivel: "Categoría C", descripcion: "Ayudante especializado", jornalUocra: 31200, jornalDiedro: 42000 }
+        { categoria: "Medio Oficial", nivel: "Categoría C", descripcion: "Ayudante especializado", jornalUocra: 31200, jornalDiedro: 42000 },
+        { categoria: "Ayudante", nivel: "Categoría D", descripcion: "Sin experiencia", jornalUocra: 27500, jornalDiedro: 37000 }
     ];
 }
 
-// ================= FUNCIONES DE RENDERIZADO (adaptadas a datos dinámicos) =================
+// ================= FUNCIONES DE RENDERIZADO =================
 function renderizarTablaPrecios(filtro = "") {
     const container = document.getElementById("tablaPreciosContainer");
     if (!container) return;
@@ -171,7 +181,7 @@ function renderizarTablaJornales(filtro = "") {
             <td data-label="Diedro" class="diedro-cell">$${j.jornalDiedro.toLocaleString('es-AR')}</td>
         </tr>`;
     });
-    html += `</tbody></tr>`;
+    html += `</tbody></table>`;
     container.innerHTML = html;
 }
 
@@ -251,15 +261,20 @@ function cerrarModal() {
     document.getElementById("profesionalModal").style.display = "none";
 }
 
-function renderizarTopProfesionales() {
-    const container = document.getElementById("topProfesionalesContainer");
+function renderizarTopHorizontal() {
+    const container = document.getElementById("topProfesionalesHorizontal");
     if (!container) return;
-    const top = [...profesionalesData].sort((a,b) => b.puntos - a.puntos).slice(0,3);
+    const top = [...profesionalesData].sort((a,b) => b.puntos - a.puntos).slice(0,10);
     if (!top.length) { container.innerHTML = "<div class='loading-spinner'>No hay profesionales</div>"; return; }
-    container.innerHTML = top.map(prof => {
-        let estrellasHtml = ""; for (let i=1;i<=5;i++) estrellasHtml += i<=prof.estrellas ? '<i class="fas fa-star"></i>' : '<i class="far fa-star"></i>';
-        return `<div class="top-card"><div class="top-card-header"><img src="${prof.imagen}" alt="${prof.nombre}" class="top-avatar" onerror="this.src='https://via.placeholder.com/55?text=?'"><div class="top-info"><h4>${prof.nombre}</h4><span class="top-oficio">${prof.oficio}</span></div></div><div class="top-puntos"><i class="fas fa-coins"></i> ${prof.puntos} puntos</div><div class="top-estrellas">${estrellasHtml}</div><a href="https://wa.me/${prof.whatsapp}?text=Hola%20${encodeURIComponent(prof.nombre)}%2C%20vi%20tu%20perfil%20en%20Diedro" target="_blank" class="btn-top-wa"><i class="fab fa-whatsapp"></i> Contactar</a></div>`;
-    }).join("");
+    container.innerHTML = top.map(prof => `
+        <div class="prof-horizontal-card">
+            <img src="${prof.imagen}" class="prof-horizontal-img" onerror="this.src='https://via.placeholder.com/70?text=?'">
+            <h4>${prof.nombre}</h4>
+            <div class="prof-oficio">${prof.oficio}</div>
+            <div class="prof-puntos"><i class="fas fa-coins"></i> ${prof.puntos} pts</div>
+            <a href="https://wa.me/${prof.whatsapp}?text=Hola%20${encodeURIComponent(prof.nombre)}" target="_blank" class="btn-wa-mini"><i class="fab fa-whatsapp"></i> Contactar</a>
+        </div>
+    `).join("");
 }
 
 function cargarCategoriasCalculadora() {
@@ -330,7 +345,169 @@ function actualizarTotales() {
     document.getElementById("totalDiedro").innerHTML = `$${totalD.toLocaleString('es-AR')}`;
 }
 
-// ================= EVENTOS Y TABS =================
+function generarPDFConvenio() {
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+    const fecha = new Date().toLocaleDateString('es-AR');
+    const azulMarino = [25, 55, 85];
+    const grisClaro = [245, 245, 250];
+    const grisBorde = [200, 200, 210];
+    
+    doc.setFontSize(22);
+    doc.setTextColor(azulMarino[0], azulMarino[1], azulMarino[2]);
+    doc.setFont("helvetica", "bold");
+    doc.text("DIEDRO", 105, 25, { align: "center" });
+    
+    doc.setFontSize(11);
+    doc.setFont("helvetica", "normal");
+    doc.setTextColor(80, 80, 100);
+    doc.text("Portal de Costos DIEDRO sugerido/ UOCRA + Directorio de Talentos", 105, 33, { align: "center" });
+    
+    doc.setDrawColor(azulMarino[0], azulMarino[1], azulMarino[2]);
+    doc.setLineWidth(0.5);
+    doc.line(30, 38, 180, 38);
+    
+    doc.setFontSize(9);
+    doc.setTextColor(100, 100, 120);
+    doc.text(`Documento generado el ${fecha} - Fuente: Relevamiento Diedro y UOCRA`, 105, 46, { align: "center" });
+    
+    let y = 56;
+    doc.setFillColor(grisClaro[0], grisClaro[1], grisClaro[2]);
+    doc.rect(20, y-4, 170, 8, 'F');
+    doc.setFontSize(12);
+    doc.setTextColor(azulMarino[0], azulMarino[1], azulMarino[2]);
+    doc.setFont("helvetica", "bold");
+    doc.text("Jornales por categoría (jornada de 8 horas)", 25, y);
+    y += 8;
+    const headerY = y;
+    doc.setFillColor(azulMarino[0], azulMarino[1], azulMarino[2]);
+    doc.rect(20, headerY-4, 170, 6, 'F');
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(9);
+    doc.setFont("helvetica", "bold");
+    doc.text("Categoría", 22, headerY);
+    doc.text("Tiempo", 72, headerY);
+    doc.text("Jornal UOCRA", 110, headerY);
+    doc.text("Jornal Diedro", 148, headerY);
+    doc.setTextColor(0, 0, 0);
+    doc.setFont("helvetica", "normal");
+    y = headerY + 5;
+    for (const j of jornalesData) {
+        if (y > 270) { doc.addPage(); y = 20; }
+        doc.text(j.categoria.substring(0, 28), 22, y);
+        doc.text(j.nivel.substring(0, 15), 72, y);
+        doc.text(`$${j.jornalUocra.toLocaleString('es-AR')}`, 110, y);
+        doc.text(`$${j.jornalDiedro.toLocaleString('es-AR')}`, 148, y);
+        y += 5;
+    }
+    y += 6;
+    doc.setDrawColor(grisBorde[0], grisBorde[1], grisBorde[2]);
+    doc.setLineWidth(0.3);
+    doc.line(20, y-2, 190, y-2);
+    doc.setFillColor(grisClaro[0], grisClaro[1], grisClaro[2]);
+    doc.rect(20, y+2, 170, 8, 'F');
+    doc.setFontSize(12);
+    doc.setFont("helvetica", "bold");
+    doc.setTextColor(azulMarino[0], azulMarino[1], azulMarino[2]);
+    doc.text("Precios por tarea (mano de obra)", 25, y+6);
+    y += 14;
+    const headerY2 = y;
+    doc.setFillColor(azulMarino[0], azulMarino[1], azulMarino[2]);
+    doc.rect(20, headerY2-4, 170, 6, 'F');
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(9);
+    doc.setFont("helvetica", "bold");
+    doc.text("Tarea", 22, headerY2);
+    doc.text("Unidad", 92, headerY2);
+    doc.text("UOCRA", 122, headerY2);
+    doc.text("Diedro", 152, headerY2);
+    doc.setTextColor(0, 0, 0);
+    doc.setFont("helvetica", "normal");
+    y = headerY2 + 5;
+    for (const p of preciosData) {
+        if (y > 270) { doc.addPage(); y = 20; }
+        doc.text(p.tarea.substring(0, 38), 22, y);
+        doc.text(p.unidad, 92, y);
+        doc.text(`$${p.precioUocra.toLocaleString('es-AR')}`, 122, y);
+        doc.text(`$${p.precioDiedro.toLocaleString('es-AR')}`, 152, y);
+        y += 5;
+    }
+    doc.setDrawColor(azulMarino[0], azulMarino[1], azulMarino[2]);
+    doc.setLineWidth(0.5);
+    doc.line(20, 285, 190, 285);
+    doc.setFontSize(7);
+    doc.setTextColor(100, 100, 120);
+    doc.text("© 2026 Diedro - Costos actualizados mensualmente. Contacto: info@diedro.com", 105, 292, { align: "center" });
+    doc.save(`Convenio_UOCRA_Diedro_${fecha.replace(/\//g, '-')}.pdf`);
+}
+
+function generarPDFPresupuesto() {
+    if (!presupuestoItems.length) { alert("Agregá items al presupuesto."); return; }
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+    const fecha = new Date().toLocaleDateString('es-AR');
+    const azulMarino = [25, 55, 85];
+    doc.setFontSize(22);
+    doc.setTextColor(azulMarino[0], azulMarino[1], azulMarino[2]);
+    doc.setFont("helvetica", "bold");
+    doc.text("DIEDRO", 105, 25, { align: "center" });
+    doc.setFontSize(11);
+    doc.setFont("helvetica", "normal");
+    doc.setTextColor(80, 80, 100);
+    doc.text("Presupuesto de mano de obra", 105, 33, { align: "center" });
+    doc.setDrawColor(azulMarino[0], azulMarino[1], azulMarino[2]);
+    doc.setLineWidth(0.5);
+    doc.line(30, 38, 180, 38);
+    doc.setFontSize(9);
+    doc.setTextColor(100, 100, 120);
+    doc.text(`Generado el ${fecha} - Presupuesto personalizado`, 105, 46, { align: "center" });
+    let y = 56;
+    doc.setFillColor(azulMarino[0], azulMarino[1], azulMarino[2]);
+    doc.rect(20, y-5, 170, 8, 'F');
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(9);
+    doc.setFont("helvetica", "bold");
+    doc.text("Item", 22, y);
+    doc.text("Descripción", 40, y);
+    doc.text("Cant.", 110, y);
+    doc.text("Precio unit.", 130, y);
+    doc.text("Subtotal", 155, y);
+    doc.setTextColor(0, 0, 0);
+    doc.setFont("helvetica", "normal");
+    y += 6;
+    let totalGeneral = 0;
+    let itemNumber = 1;
+    for (const item of presupuestoItems) {
+        if (y > 270) { doc.addPage(); y = 20; }
+        const subtotal = item.precioDiedro * item.cantidad;
+        totalGeneral += subtotal;
+        let desc = item.tarea.length > 35 ? item.tarea.substring(0, 32) + "..." : item.tarea;
+        doc.text(`${itemNumber}`, 22, y);
+        doc.text(desc, 40, y);
+        doc.text(`${item.cantidad}`, 112, y);
+        doc.text(`$${item.precioDiedro.toLocaleString('es-AR')}`, 132, y);
+        doc.text(`$${subtotal.toLocaleString('es-AR')}`, 157, y);
+        y += 6;
+        itemNumber++;
+    }
+    y += 4;
+    doc.setDrawColor(azulMarino[0], azulMarino[1], azulMarino[2]);
+    doc.setLineWidth(0.3);
+    doc.line(20, y-2, 190, y-2);
+    doc.setFontSize(11);
+    doc.setFont("helvetica", "bold");
+    doc.setTextColor(azulMarino[0], azulMarino[1], azulMarino[2]);
+    doc.text("Total Sugerido Diedro:", 110, y+4);
+    doc.text(`$${totalGeneral.toLocaleString('es-AR')}`, 157, y+4);
+    doc.setDrawColor(azulMarino[0], azulMarino[1], azulMarino[2]);
+    doc.setLineWidth(0.5);
+    doc.line(20, 285, 190, 285);
+    doc.setFontSize(7);
+    doc.setTextColor(100, 100, 120);
+    doc.text("© 2026 Diedro - Presupuesto válido por 30 días. Contacto: info@diedro.com", 105, 292, { align: "center" });
+    doc.save(`presupuesto_diedro_${fecha.replace(/\//g, '-')}.pdf`);
+}
+
 function initTabs() {
     const tabs = document.querySelectorAll('.tab-btn');
     const panes = document.querySelectorAll('.tab-pane');
@@ -347,127 +524,53 @@ function initTabs() {
             if(tabId === 'jornales') renderizarTablaJornales();
         });
     });
+}
+
+function initMobileMenu() {
+    const hamburger = document.getElementById("hamburgerMenu");
+    const mobileMenu = document.getElementById("mobileMenu");
+    const mobileBtns = document.querySelectorAll(".mobile-tab-btn");
+    if (hamburger && mobileMenu) {
+        hamburger.addEventListener("click", () => {
+            mobileMenu.classList.toggle("show");
+        });
+        mobileBtns.forEach(btn => {
+            btn.addEventListener("click", () => {
+                const tabId = btn.dataset.tab;
+                document.querySelectorAll(".tab-pane").forEach(p => p.classList.remove("active"));
+                document.getElementById(tabId).classList.add("active");
+                document.querySelectorAll(".tab-btn").forEach(t => t.classList.remove("active"));
+                document.querySelector(`.tab-btn[data-tab="${tabId}"]`).classList.add("active");
+                mobileBtns.forEach(b => b.classList.remove("active"));
+                btn.classList.add("active");
+                mobileMenu.classList.remove("show");
+                if(tabId === 'cotizador') cargarTareasParaCotizar();
+                if(tabId === 'directorio') renderizarDirectorioCompleto();
+                if(tabId === 'precios') renderizarTablaPrecios();
+                if(tabId === 'jornales') renderizarTablaJornales();
+            });
+        });
+    }
+}
+
+function setupEventListeners() {
     document.getElementById("heroCotizarBtn")?.addEventListener('click', () => document.querySelector('.tab-btn[data-tab="cotizador"]').click());
     document.getElementById("heroDirectorioBtn")?.addEventListener('click', () => document.querySelector('.tab-btn[data-tab="directorio"]').click());
+    document.getElementById("verDirectorioLinkMovil")?.addEventListener('click', (e) => {
+        e.preventDefault();
+        document.querySelector('.tab-btn[data-tab="directorio"]').click();
+    });
     
-    // BOTÓN WHATSAPP DEL HEADER - REDIRECCIÓN DIRECTA
+    // Botón WhatsApp flotante y del header ya tienen eventos en el HTML, pero por si acaso:
     document.getElementById("contactoProfesionalBtn")?.addEventListener('click', (e) => {
         e.preventDefault();
         const numero = "5493875048697";
         const mensaje = "Hola, quiero más información para aparecer en el directorio Diedro";
-        const url = `https://wa.me/${numero}?text=${encodeURIComponent(mensaje)}`;
-        window.open(url, "_blank");
+        window.open(`https://wa.me/${numero}?text=${encodeURIComponent(mensaje)}`, "_blank");
     });
     
-    // ========== PDF PROFESIONAL - CONVENIO ==========
-    document.getElementById("descargaPDFConvenio")?.addEventListener('click', (e) => {
-        e.preventDefault();
-        const { jsPDF } = window.jspdf;
-        const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
-        const fecha = new Date().toLocaleDateString('es-AR');
-        
-        const azulMarino = [25, 55, 85];
-        const grisClaro = [245, 245, 250];
-        const grisBorde = [200, 200, 210];
-        
-        doc.setFontSize(22);
-        doc.setTextColor(azulMarino[0], azulMarino[1], azulMarino[2]);
-        doc.setFont("helvetica", "bold");
-        doc.text("DIEDRO", 105, 25, { align: "center" });
-        
-        doc.setFontSize(11);
-        doc.setFont("helvetica", "normal");
-        doc.setTextColor(80, 80, 100);
-        doc.text("Portal de Costos DIEDRO sugerido/ UOCRA + Directorio de Talentos", 105, 33, { align: "center" });
-        
-        doc.setDrawColor(azulMarino[0], azulMarino[1], azulMarino[2]);
-        doc.setLineWidth(0.5);
-        doc.line(30, 38, 180, 38);
-        
-        doc.setFontSize(9);
-        doc.setTextColor(100, 100, 120);
-        doc.text(`Documento generado el ${fecha} - Fuente: Relevamiento Diedro y UOCRA`, 105, 46, { align: "center" });
-        
-        let y = 56;
-        
-        doc.setFillColor(grisClaro[0], grisClaro[1], grisClaro[2]);
-        doc.rect(20, y-4, 170, 8, 'F');
-        doc.setFontSize(12);
-        doc.setTextColor(azulMarino[0], azulMarino[1], azulMarino[2]);
-        doc.setFont("helvetica", "bold");
-        doc.text("Jornales por categoría (jornada de 8 horas)", 25, y);
-        y += 8;
-        
-        const headerY = y;
-        doc.setFillColor(azulMarino[0], azulMarino[1], azulMarino[2]);
-        doc.rect(20, headerY-4, 170, 6, 'F');
-        doc.setTextColor(255, 255, 255);
-        doc.setFontSize(9);
-        doc.setFont("helvetica", "bold");
-        doc.text("Categoría", 22, headerY);
-        doc.text("Tiempo", 72, headerY);
-        doc.text("Jornal UOCRA", 110, headerY);
-        doc.text("Jornal Diedro", 148, headerY);
-        
-        doc.setTextColor(0, 0, 0);
-        doc.setFont("helvetica", "normal");
-        y = headerY + 5;
-        
-        for (const j of jornalesData) {
-            if (y > 270) { doc.addPage(); y = 20; }
-            doc.text(j.categoria.substring(0, 28), 22, y);
-            doc.text(j.nivel.substring(0, 15), 72, y);
-            doc.text(`$${j.jornalUocra.toLocaleString('es-AR')}`, 110, y);
-            doc.text(`$${j.jornalDiedro.toLocaleString('es-AR')}`, 148, y);
-            y += 5;
-        }
-        
-        y += 6;
-        doc.setDrawColor(grisBorde[0], grisBorde[1], grisBorde[2]);
-        doc.setLineWidth(0.3);
-        doc.line(20, y-2, 190, y-2);
-        
-        doc.setFillColor(grisClaro[0], grisClaro[1], grisClaro[2]);
-        doc.rect(20, y+2, 170, 8, 'F');
-        doc.setFontSize(12);
-        doc.setFont("helvetica", "bold");
-        doc.setTextColor(azulMarino[0], azulMarino[1], azulMarino[2]);
-        doc.text("Precios por tarea (mano de obra)", 25, y+6);
-        y += 14;
-        
-        const headerY2 = y;
-        doc.setFillColor(azulMarino[0], azulMarino[1], azulMarino[2]);
-        doc.rect(20, headerY2-4, 170, 6, 'F');
-        doc.setTextColor(255, 255, 255);
-        doc.setFontSize(9);
-        doc.setFont("helvetica", "bold");
-        doc.text("Tarea", 22, headerY2);
-        doc.text("Unidad", 92, headerY2);
-        doc.text("UOCRA", 122, headerY2);
-        doc.text("Diedro", 152, headerY2);
-        
-        doc.setTextColor(0, 0, 0);
-        doc.setFont("helvetica", "normal");
-        y = headerY2 + 5;
-        
-        for (const p of preciosData) {
-            if (y > 270) { doc.addPage(); y = 20; }
-            doc.text(p.tarea.substring(0, 38), 22, y);
-            doc.text(p.unidad, 92, y);
-            doc.text(`$${p.precioUocra.toLocaleString('es-AR')}`, 122, y);
-            doc.text(`$${p.precioDiedro.toLocaleString('es-AR')}`, 152, y);
-            y += 5;
-        }
-        
-        doc.setDrawColor(azulMarino[0], azulMarino[1], azulMarino[2]);
-        doc.setLineWidth(0.5);
-        doc.line(20, 285, 190, 285);
-        doc.setFontSize(7);
-        doc.setTextColor(100, 100, 120);
-        doc.text("© 2026 Diedro - Costos actualizados mensualmente. Contacto: info@diedro.com", 105, 292, { align: "center" });
-        
-        doc.save(`Convenio_UOCRA_Diedro_${fecha.replace(/\//g, '-')}.pdf`);
-    });
+    const descargaHero = document.getElementById("descargaPDFConvenioHero");
+    if(descargaHero) descargaHero.addEventListener("click", (e) => { e.preventDefault(); generarPDFConvenio(); });
     
     document.getElementById("agregarSeleccionadas")?.addEventListener("click", () => {
         const checks = document.querySelectorAll(".check-tarea:checked");
@@ -484,94 +587,13 @@ function initTabs() {
         actualizarListaPresupuesto();
         document.querySelectorAll(".check-tarea:checked").forEach(ch => ch.checked = false);
     });
+    
     document.getElementById("buscarTareaCotizar")?.addEventListener("input", (e) => {
         const term = e.target.value.toLowerCase();
         document.querySelectorAll(".tarea-item").forEach(item => item.style.display = item.innerText.toLowerCase().includes(term) ? "flex" : "none");
     });
     
-    // PDF DE PRESUPUESTO MEJORADO
-    document.getElementById("generarPDFBtn")?.addEventListener("click", async () => {
-        if (!presupuestoItems.length) { alert("Agregá items al presupuesto."); return; }
-        const { jsPDF } = window.jspdf;
-        const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
-        const fecha = new Date().toLocaleDateString('es-AR');
-        
-        const azulMarino = [25, 55, 85];
-        
-        doc.setFontSize(22);
-        doc.setTextColor(azulMarino[0], azulMarino[1], azulMarino[2]);
-        doc.setFont("helvetica", "bold");
-        doc.text("DIEDRO", 105, 25, { align: "center" });
-        
-        doc.setFontSize(11);
-        doc.setFont("helvetica", "normal");
-        doc.setTextColor(80, 80, 100);
-        doc.text("Presupuesto de mano de obra", 105, 33, { align: "center" });
-        
-        doc.setDrawColor(azulMarino[0], azulMarino[1], azulMarino[2]);
-        doc.setLineWidth(0.5);
-        doc.line(30, 38, 180, 38);
-        
-        doc.setFontSize(9);
-        doc.setTextColor(100, 100, 120);
-        doc.text(`Generado el ${fecha} - Presupuesto personalizado`, 105, 46, { align: "center" });
-        
-        let y = 56;
-        
-        doc.setFillColor(azulMarino[0], azulMarino[1], azulMarino[2]);
-        doc.rect(20, y-5, 170, 8, 'F');
-        doc.setTextColor(255, 255, 255);
-        doc.setFontSize(9);
-        doc.setFont("helvetica", "bold");
-        doc.text("Item", 22, y);
-        doc.text("Descripción", 40, y);
-        doc.text("Cant.", 110, y);
-        doc.text("Precio unit.", 130, y);
-        doc.text("Subtotal", 155, y);
-        
-        doc.setTextColor(0, 0, 0);
-        doc.setFont("helvetica", "normal");
-        y += 6;
-        
-        let totalGeneral = 0;
-        let itemNumber = 1;
-        
-        for (const item of presupuestoItems) {
-            if (y > 270) { doc.addPage(); y = 20; }
-            const subtotal = item.precioDiedro * item.cantidad;
-            totalGeneral += subtotal;
-            
-            let desc = item.tarea.length > 35 ? item.tarea.substring(0, 32) + "..." : item.tarea;
-            doc.text(`${itemNumber}`, 22, y);
-            doc.text(desc, 40, y);
-            doc.text(`${item.cantidad}`, 112, y);
-            doc.text(`$${item.precioDiedro.toLocaleString('es-AR')}`, 132, y);
-            doc.text(`$${subtotal.toLocaleString('es-AR')}`, 157, y);
-            
-            y += 6;
-            itemNumber++;
-        }
-        
-        y += 4;
-        doc.setDrawColor(azulMarino[0], azulMarino[1], azulMarino[2]);
-        doc.setLineWidth(0.3);
-        doc.line(20, y-2, 190, y-2);
-        
-        doc.setFontSize(11);
-        doc.setFont("helvetica", "bold");
-        doc.setTextColor(azulMarino[0], azulMarino[1], azulMarino[2]);
-        doc.text("Total Sugerido Diedro:", 110, y+4);
-        doc.text(`$${totalGeneral.toLocaleString('es-AR')}`, 157, y+4);
-        
-        doc.setDrawColor(azulMarino[0], azulMarino[1], azulMarino[2]);
-        doc.setLineWidth(0.5);
-        doc.line(20, 285, 190, 285);
-        doc.setFontSize(7);
-        doc.setTextColor(100, 100, 120);
-        doc.text("© 2026 Diedro - Presupuesto válido por 30 días. Contacto: info@diedro.com", 105, 292, { align: "center" });
-        
-        doc.save(`presupuesto_diedro_${fecha.replace(/\//g, '-')}.pdf`);
-    });
+    document.getElementById("generarPDFBtn")?.addEventListener("click", generarPDFPresupuesto);
     
     document.getElementById("searchPrecios")?.addEventListener("input", e => renderizarTablaPrecios(e.target.value));
     document.getElementById("searchJornales")?.addEventListener("input", e => renderizarTablaJornales(e.target.value));
@@ -582,18 +604,17 @@ function initTabs() {
         document.getElementById("filtroZona").value = "";
         renderizarDirectorioCompleto();
     });
+    
     document.getElementById("calcDias")?.addEventListener("input", actualizarCalculo);
     document.getElementById("calcCategoria")?.addEventListener("change", actualizarCalculo);
     document.getElementById("aplicarCalculoBtn")?.addEventListener("click", aplicarCalculoACotizador);
-    document.getElementById("verDirectorioLink")?.addEventListener("click", (e) => {
-        e.preventDefault();
-        document.querySelector('.tab-btn[data-tab="directorio"]').click();
-    });
+    
     document.querySelector('.modal-close')?.addEventListener('click', cerrarModal);
     window.addEventListener('click', (e) => {
         const modal = document.getElementById("profesionalModal");
         if (e.target === modal) cerrarModal();
     });
+    
     window.addEventListener('resize', () => {
         clearTimeout(window.resizingTimeout);
         window.resizingTimeout = setTimeout(() => {
@@ -602,9 +623,8 @@ function initTabs() {
     });
 }
 
-// ================= INICIALIZACIÓN PRINCIPAL =================
 async function inicializar() {
-    document.getElementById("topProfesionalesContainer").innerHTML = '<div class="loading-spinner">Cargando profesionales...</div>';
+    document.getElementById("topProfesionalesHorizontal").innerHTML = '<div class="loading-spinner">Cargando profesionales...</div>';
     document.getElementById("directorioContainer").innerHTML = '<div class="loading-spinner">Cargando directorio...</div>';
     document.getElementById("tablaPreciosContainer").innerHTML = '<div class="loading-spinner">Cargando precios...</div>';
     document.getElementById("tablaJornalesContainer").innerHTML = '<div class="loading-spinner">Cargando jornales...</div>';
@@ -614,13 +634,15 @@ async function inicializar() {
     preciosData = prec;
     jornalesData = jor;
     
+    renderizarTopHorizontal();
     renderizarTablaPrecios();
     renderizarTablaJornales();
     renderizarDirectorioCompleto();
-    renderizarTopProfesionales();
     cargarCategoriasCalculadora();
     actualizarCalculo();
     initTabs();
+    initMobileMenu();
+    setupEventListeners();
 }
 
 document.addEventListener("DOMContentLoaded", inicializar);
