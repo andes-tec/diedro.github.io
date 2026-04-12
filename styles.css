@@ -1397,7 +1397,7 @@ body {
 }
 
 .presupuesto-items {
-    min-height: 200px;
+    min-height: 20px;
     max-height: 300px;
     overflow-y: auto;
     margin-bottom: 1rem;
