@@ -1,15 +1,16 @@
-// ================= CONFIGURACIÓN: URLs de Google Sheets =================
-const PROFESIONALES_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTx3AHpmzmLegZxB6Cr_gY9iD3D_LGBHO2GK2MIBdS4Ts1makgdpX9LwzNDLMeG0CoiGUCCZNdP6d-t/pub?gid=0&single=true&output=csv";
-const PRECIOS_CSV_URL      = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTx3AHpmzmLegZxB6Cr_gY9iD3D_LGBHO2GK2MIBdS4Ts1makgdpX9LwzNDLMeG0CoiGUCCZNdP6d-t/pub?gid=798155947&single=true&output=csv";
-const JORNALES_CSV_URL     = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTx3AHpmzmLegZxB6Cr_gY9iD3D_LGBHO2GK2MIBdS4Ts1makgdpX9LwzNDLMeG0CoiGUCCZNdP6d-t/pub?gid=1835644096&single=true&output=csv";
+// ================= CONFIGURACIÓN: Proxy Cloudflare Workers =================
+const PROXY_URL = "https://diedro-proxy.aquilesdesarrollo.workers.dev"; // ⚠️ WORKER
+const SECRET_API_KEY = "D13dr0S3cr3tK3y2025"; // ⚠️ CONFIGURACION CLOUDFLARE
 
 // ================= VARIABLES GLOBALES =================
 let profesionalesData = [];
 let preciosData = [];
 let jornalesData = [];
 let presupuestoItems = [];
+let comentariosCache = {};
+let contadorComentarios = {};
 
-// ================= FUNCIONES PARA CARGAR CSV =================
+// ================= FUNCIONES PARA CARGAR CSV (vía proxy) =================
 async function cargarCSV(url) {
     try {
         const response = await fetch(url);
@@ -58,8 +59,77 @@ function parseCSV(csv) {
     return datos;
 }
 
+// ================= COMENTARIOS (vía proxy) =================
+async function cargarComentarios(idProfesional) {
+    if (comentariosCache[idProfesional]) return comentariosCache[idProfesional];
+    try {
+        const response = await fetch(`${PROXY_URL}/api/comentarios`);
+        const csvText = await response.text();
+        const data = parseCSV(csvText);
+        const comentarios = data.filter(c => String(c.id_profesional) === String(idProfesional));
+        comentarios.sort((a,b) => new Date(b.fecha) - new Date(a.fecha));
+        comentariosCache[idProfesional] = comentarios;
+        return comentarios;
+    } catch (error) {
+        console.error("Error cargando comentarios", error);
+        return [];
+    }
+}
+
+async function enviarComentario(idProfesional, nombre, comentario) {
+    const fecha = new Date().toISOString();
+    const data = {
+        id_profesional: idProfesional,
+        nombre_usuario: nombre.trim() === "" ? "Anónimo" : nombre.trim(),
+        comentario: comentario.trim(),
+        fecha: fecha
+    };
+    try {
+        const response = await fetch(`${PROXY_URL}/api/enviar-comentario`, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "X-API-Key": SECRET_API_KEY
+            },
+            body: JSON.stringify(data)
+        });
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.error || "Error al enviar comentario");
+        }
+        const result = await response.json();
+        if (result.success === false) throw new Error(result.error);
+        return {
+            id_profesional: idProfesional,
+            nombre_usuario: data.nombre_usuario,
+            comentario: data.comentario,
+            fecha: fecha
+        };
+    } catch (error) {
+        console.error("Error enviando comentario", error);
+        alert(error.message);
+        return null;
+    }
+}
+
+function actualizarContadorComentariosEnDirectorio(idProfesional, nuevoTotal) {
+    document.querySelectorAll(`.profile-card[data-id="${idProfesional}"] .comentarios-count`).forEach(el => {
+        el.textContent = nuevoTotal;
+    });
+    document.querySelectorAll(`.profile-card-compact[data-id="${idProfesional}"] .comentarios-count`).forEach(el => {
+        el.textContent = nuevoTotal;
+    });
+    const modalComentarioCount = document.querySelector(`#modalBody .comentarios-total-count`);
+    if (modalComentarioCount && modalComentarioCount.dataset.id == idProfesional) {
+        modalComentarioCount.textContent = nuevoTotal;
+    }
+}
+
+// ================= CARGA DE DATOS PRINCIPALES =================
 async function cargarProfesionales() {
-    const datos = await cargarCSV(PROFESIONALES_CSV_URL);
+    const response = await fetch(`${PROXY_URL}/api/profesionales`);
+    const csvText = await response.text();
+    const datos = parseCSV(csvText);
     if (datos.length === 0) {
         console.warn("No se cargaron profesionales, usando datos por defecto.");
         return getDefaultProfesionales();
@@ -79,7 +149,9 @@ async function cargarProfesionales() {
 }
 
 async function cargarPrecios() {
-    const datos = await cargarCSV(PRECIOS_CSV_URL);
+    const response = await fetch(`${PROXY_URL}/api/precios`);
+    const csvText = await response.text();
+    const datos = parseCSV(csvText);
     if (datos.length === 0) {
         console.warn("No se cargaron precios, usando datos por defecto.");
         return getDefaultPrecios();
@@ -95,7 +167,9 @@ async function cargarPrecios() {
 }
 
 async function cargarJornales() {
-    const datos = await cargarCSV(JORNALES_CSV_URL);
+    const response = await fetch(`${PROXY_URL}/api/jornales`);
+    const csvText = await response.text();
+    const datos = parseCSV(csvText);
     if (datos.length === 0) {
         console.warn("No se cargaron jornales, usando datos por defecto.");
         return getDefaultJornales();
@@ -144,7 +218,7 @@ function getDefaultJornales() {
     ];
 }
 
-// ================= FUNCIONES DE RENDERIZADO =================
+// ================= RENDERIZADO DE TABLAS =================
 function renderizarTablaPrecios(filtro = "") {
     const container = document.getElementById("tablaPreciosContainer");
     if (!container) return;
@@ -185,6 +259,7 @@ function renderizarTablaJornales(filtro = "") {
     container.innerHTML = html;
 }
 
+// ================= DIRECTORIO =================
 function renderizarDirectorioCompleto() {
     let oficioFiltro = document.getElementById("filtroOficio")?.value || "";
     let zonaFiltro = document.getElementById("filtroZona")?.value.toLowerCase() || "";
@@ -197,6 +272,7 @@ function renderizarDirectorioCompleto() {
     if (isMobile) {
         container.innerHTML = filtered.map(prof => {
             let oficioIcono = { "Albañil":"fas fa-hard-hat", "Arquitecto":"fas fa-drafting-compass", "Arquitecta":"fas fa-drafting-compass", "Electricista":"fas fa-bolt", "Ingeniero":"fas fa-calculator", "Plomero":"fas fa-wrench", "Pintor":"fas fa-paint-roller", "Yesero":"fas fa-gripfire", "Soldador":"fas fa-fire", "Contratista":"fas fa-handshake", "Ayudante":"fas fa-user-friends", "Canaletero":"fas fa-water", "Durlero":"fas fa-couch" }[prof.oficio] || "fas fa-user";
+            const cantComentarios = contadorComentarios[prof.id] || 0;
             return `
                 <div class="profile-card-compact" data-id="${prof.id}">
                     <img src="${prof.imagen}" alt="${prof.nombre}" class="compact-avatar" onerror="this.src='https://via.placeholder.com/50?text=?'">
@@ -205,7 +281,10 @@ function renderizarDirectorioCompleto() {
                         <div class="compact-oficio"><i class="${oficioIcono}"></i> ${prof.oficio}</div>
                         <div class="compact-zona"><i class="fas fa-map-marker-alt"></i> ${prof.zona}</div>
                     </div>
-                    <div class="compact-puntos">${prof.puntos} pts</div>
+                    <div class="compact-puntos">
+                        <i class="fas fa-comment"></i> <span class="comentarios-count">${cantComentarios}</span>
+                        ${prof.puntos} pts
+                    </div>
                 </div>
             `;
         }).join("");
@@ -225,12 +304,53 @@ function renderizarDirectorioCompleto() {
             else if (prof.estado === "confiable") nivelTexto = "📈 CONFIABLE";
             else nivelTexto = "🆕 EN CRECIMIENTO";
             let oficioIcono = { "Albañil":"fas fa-hard-hat", "Arquitecto":"fas fa-drafting-compass", "Arquitecta":"fas fa-drafting-compass", "Electricista":"fas fa-bolt", "Ingeniero":"fas fa-calculator", "Plomero":"fas fa-wrench", "Pintor":"fas fa-paint-roller", "Yesero":"fas fa-gripfire", "Soldador":"fas fa-fire", "Contratista":"fas fa-handshake", "Ayudante":"fas fa-user-friends", "Canaletero":"fas fa-water", "Durlero":"fas fa-couch" }[prof.oficio] || "fas fa-user";
-            return `<div class="profile-card"><div class="profile-header"><div class="profile-image"><img src="${prof.imagen}" alt="${prof.nombre}" onerror="this.onerror=null; this.parentElement.innerHTML='<div class=\'image-placeholder\'><i class=\'${oficioIcono}\'></i></div>';"></div><div class="profile-info-header"><h3><i class="fas fa-user-check"></i> ${prof.nombre}</h3><div class="puntos-highlight">${prof.puntos} pts</div></div></div><div class="oficio-tag"><i class="${oficioIcono}"></i> ${prof.oficio}</div><div class="zona-info"><i class="fas fa-map-marker-alt"></i> ${prof.zona}</div><div class="descripcion-text">${prof.descripcion}</div><div class="estrellas-container">${estrellasHtml} (${prof.estrellas}/5)</div><div class="nivel-puntos">${nivelTexto}</div><a href="https://wa.me/${prof.whatsapp}?text=Hola%20${encodeURIComponent(prof.nombre)}" target="_blank" class="btn-whatsapp"><i class="fab fa-whatsapp"></i> Contactar</a></div>`;
+            const cantComentarios = contadorComentarios[prof.id] || 0;
+            return `<div class="profile-card" data-id="${prof.id}">
+                        <div class="profile-header">
+                            <div class="profile-image"><img src="${prof.imagen}" alt="${prof.nombre}" onerror="this.onerror=null; this.parentElement.innerHTML='<div class=\'image-placeholder\'><i class=\'${oficioIcono}\'></i></div>';"></div>
+                            <div class="profile-info-header">
+                                <h3><i class="fas fa-user-check"></i> ${prof.nombre}</h3>
+                                <div class="puntos-highlight">${prof.puntos} pts</div>
+                            </div>
+                        </div>
+                        <div class="oficio-tag"><i class="${oficioIcono}"></i> ${prof.oficio}</div>
+                        <div class="zona-info"><i class="fas fa-map-marker-alt"></i> ${prof.zona}</div>
+                        <div class="descripcion-text">${prof.descripcion}</div>
+                        <div class="estrellas-container">${estrellasHtml} (${prof.estrellas}/5)</div>
+                        <div class="nivel-puntos">${nivelTexto}</div>
+                        <div class="comentarios-badge" data-id="${prof.id}"><i class="fas fa-comment"></i> <span class="comentarios-count">${cantComentarios}</span> comentario${cantComentarios !== 1 ? 's' : ''}</div>
+                        <a href="https://wa.me/${prof.whatsapp}?text=Hola%20${encodeURIComponent(prof.nombre)}" target="_blank" class="btn-whatsapp"><i class="fab fa-whatsapp"></i> Contactar</a>
+                    </div>`;
         }).join("");
+        
+        document.querySelectorAll('.profile-card').forEach(card => {
+            card.addEventListener('click', (e) => {
+                if (e.target.closest('.comentarios-badge')) return;
+                const id = card.dataset.id;
+                const profesional = profesionalesData.find(p => p.id == id);
+                if (profesional) abrirModal(profesional);
+            });
+        });
+        
+        document.querySelectorAll('.comentarios-badge').forEach(badge => {
+            badge.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const id = badge.dataset.id;
+                const profesional = profesionalesData.find(p => p.id == id);
+                if (profesional) {
+                    abrirModal(profesional);
+                    setTimeout(() => {
+                        const comentariosSection = document.querySelector('#modalBody .comentarios-section');
+                        if (comentariosSection) comentariosSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    }, 300);
+                }
+            });
+        });
     }
 }
 
-function abrirModal(prof) {
+// ================= MODAL =================
+async function abrirModal(prof) {
     const modal = document.getElementById("profesionalModal");
     const modalBody = document.getElementById("modalBody");
     let estrellasHtml = ""; for (let i=1;i<=5;i++) estrellasHtml += i<=prof.estrellas ? '<i class="fas fa-star"></i>' : '<i class="far fa-star"></i>';
@@ -240,6 +360,21 @@ function abrirModal(prof) {
     else if (prof.estado === "confiable") nivelTexto = "📈 CONFIABLE";
     else nivelTexto = "🆕 EN CRECIMIENTO";
     let oficioIcono = { "Albañil":"fas fa-hard-hat", "Arquitecto":"fas fa-drafting-compass", "Arquitecta":"fas fa-drafting-compass", "Electricista":"fas fa-bolt", "Ingeniero":"fas fa-calculator", "Plomero":"fas fa-wrench", "Pintor":"fas fa-paint-roller", "Yesero":"fas fa-gripfire", "Soldador":"fas fa-fire", "Contratista":"fas fa-handshake", "Ayudante":"fas fa-user-friends", "Canaletero":"fas fa-water", "Durlero":"fas fa-couch" }[prof.oficio] || "fas fa-user";
+    
+    const comentarios = await cargarComentarios(prof.id);
+    const cantidad = comentarios.length;
+    contadorComentarios[prof.id] = cantidad;
+    
+    const comentariosHtml = comentarios.map(c => `
+        <div class="comentario-item" data-fecha="${c.fecha}">
+            <div class="comentario-header">
+                <span class="comentario-nombre">${escapeHtml(c.nombre_usuario)}</span>
+                <span class="comentario-fecha">${new Date(c.fecha).toLocaleDateString('es-AR')}</span>
+            </div>
+            <div class="comentario-texto">${escapeHtml(c.comentario)}</div>
+        </div>
+    `).join("");
+    
     modalBody.innerHTML = `
         <div class="modal-profile-header">
             <div class="modal-profile-image"><img src="${prof.imagen}" alt="${prof.nombre}" onerror="this.src='https://via.placeholder.com/80?text=?'"></div>
@@ -253,14 +388,96 @@ function abrirModal(prof) {
         <div class="modal-descripcion">${prof.descripcion}</div>
         <div class="modal-estrellas">${estrellasHtml} (${prof.estrellas}/5)</div>
         <a href="https://wa.me/${prof.whatsapp}?text=Hola%20${encodeURIComponent(prof.nombre)}%2C%20vi%20tu%20perfil%20en%20Diedro" target="_blank" class="modal-whatsapp"><i class="fab fa-whatsapp"></i> Contactar por WhatsApp</a>
+        
+        <div class="comentarios-section">
+            <h4><i class="fas fa-comments"></i> Comentarios de clientes 
+                <span class="comentarios-total-count" data-id="${prof.id}" style="background:var(--gold); color:var(--navy); padding:0.1rem 0.5rem; border-radius:1rem; font-size:0.7rem;">${cantidad}</span>
+            </h4>
+            <div class="lista-comentarios" id="listaComentarios_${prof.id}">
+                ${comentariosHtml || '<div class="comentario-item">No hay comentarios aún. Sé el primero en opinar.</div>'}
+            </div>
+            <div class="form-comentario">
+                <input type="text" id="comentarioNombre_${prof.id}" placeholder="Tu nombre (opcional)">
+                <textarea id="comentarioTexto_${prof.id}" placeholder="Escribe tu comentario..." rows="2"></textarea>
+                <button class="btn-enviar-comentario" data-id="${prof.id}"><i class="fas fa-paper-plane"></i> Enviar comentario</button>
+            </div>
+        </div>
     `;
+    
+    const btnEnviar = modalBody.querySelector('.btn-enviar-comentario');
+    btnEnviar.addEventListener('click', async (e) => {
+        const id = btnEnviar.dataset.id;
+        const nombreInput = document.getElementById(`comentarioNombre_${id}`);
+        const textoInput = document.getElementById(`comentarioTexto_${id}`);
+        const nombre = nombreInput.value;
+        const texto = textoInput.value;
+        if (!texto.trim()) {
+            alert("Por favor escribí un comentario.");
+            return;
+        }
+        btnEnviar.disabled = true;
+        btnEnviar.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Enviando...';
+        
+        const nuevoComentario = await enviarComentario(id, nombre, texto);
+        
+        if (nuevoComentario) {
+            nombreInput.value = "";
+            textoInput.value = "";
+            
+            if (!comentariosCache[id]) comentariosCache[id] = [];
+            comentariosCache[id].unshift(nuevoComentario);
+            const nuevaCantidad = comentariosCache[id].length;
+            contadorComentarios[id] = nuevaCantidad;
+            
+            const contadorSpan = modalBody.querySelector('.comentarios-total-count');
+            if (contadorSpan) contadorSpan.textContent = nuevaCantidad;
+            
+            actualizarContadorComentariosEnDirectorio(id, nuevaCantidad);
+            
+            const listaDiv = document.getElementById(`listaComentarios_${id}`);
+            const nuevoHtml = `
+                <div class="comentario-item" data-fecha="${nuevoComentario.fecha}">
+                    <div class="comentario-header">
+                        <span class="comentario-nombre">${escapeHtml(nuevoComentario.nombre_usuario)}</span>
+                        <span class="comentario-fecha">${new Date(nuevoComentario.fecha).toLocaleDateString('es-AR')}</span>
+                    </div>
+                    <div class="comentario-texto">${escapeHtml(nuevoComentario.comentario)}</div>
+                </div>
+            `;
+            if (listaDiv.innerHTML.includes("No hay comentarios aún")) {
+                listaDiv.innerHTML = nuevoHtml;
+            } else {
+                listaDiv.insertAdjacentHTML('afterbegin', nuevoHtml);
+            }
+        } else {
+            alert("Error al enviar comentario. Intenta de nuevo más tarde.");
+        }
+        
+        btnEnviar.disabled = false;
+        btnEnviar.innerHTML = '<i class="fas fa-paper-plane"></i> Enviar comentario';
+    });
+    
     modal.style.display = "block";
+    modal.classList.add('dark');
+}
+
+function escapeHtml(str) {
+    if (!str) return "";
+    return str.replace(/[&<>]/g, function(m) {
+        if (m === '&') return '&amp;';
+        if (m === '<') return '&lt;';
+        if (m === '>') return '&gt;';
+        return m;
+    });
 }
 
 function cerrarModal() {
-    document.getElementById("profesionalModal").style.display = "none";
+    const modal = document.getElementById("profesionalModal");
+    modal.style.display = "none";
+    modal.classList.remove('dark');
 }
 
+// ================= TOP HORIZONTAL =================
 function renderizarTopHorizontal() {
     const container = document.getElementById("topProfesionalesHorizontal");
     if (!container) return;
@@ -277,6 +494,7 @@ function renderizarTopHorizontal() {
     `).join("");
 }
 
+// ================= CALCULADORA =================
 function cargarCategoriasCalculadora() {
     const select = document.getElementById("calcCategoria");
     if (!select) return;
@@ -322,6 +540,7 @@ function aplicarCalculoACotizador() {
     alert(`Se agregó al presupuesto: ${item.tarea} por $${(diedroDiario*dias).toLocaleString('es-AR')}`);
 }
 
+// ================= COTIZADOR =================
 function cargarTareasParaCotizar() {
     const container = document.getElementById("listaTareasCheck");
     if (!container) return;
@@ -345,6 +564,7 @@ function actualizarTotales() {
     document.getElementById("totalDiedro").innerHTML = `$${totalD.toLocaleString('es-AR')}`;
 }
 
+// ================= PDF =================
 function generarPDFConvenio() {
     const { jsPDF } = window.jspdf;
     const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
@@ -508,6 +728,7 @@ function generarPDFPresupuesto() {
     doc.save(`presupuesto_diedro_${fecha.replace(/\//g, '-')}.pdf`);
 }
 
+// ================= TABS Y MENÚ MÓVIL =================
 function initTabs() {
     const tabs = document.querySelectorAll('.tab-btn');
     const panes = document.querySelectorAll('.tab-pane');
@@ -553,6 +774,7 @@ function initMobileMenu() {
     }
 }
 
+// ================= EVENTOS GLOBALES =================
 function setupEventListeners() {
     document.getElementById("heroCotizarBtn")?.addEventListener('click', () => document.querySelector('.tab-btn[data-tab="cotizador"]').click());
     document.getElementById("heroDirectorioBtn")?.addEventListener('click', () => document.querySelector('.tab-btn[data-tab="directorio"]').click());
@@ -561,7 +783,6 @@ function setupEventListeners() {
         document.querySelector('.tab-btn[data-tab="directorio"]').click();
     });
     
-    // Botón WhatsApp flotante y del header ya tienen eventos en el HTML, pero por si acaso:
     document.getElementById("contactoProfesionalBtn")?.addEventListener('click', (e) => {
         e.preventDefault();
         const numero = "5493875048697";
@@ -623,6 +844,7 @@ function setupEventListeners() {
     });
 }
 
+// ================= INICIALIZACIÓN =================
 async function inicializar() {
     document.getElementById("topProfesionalesHorizontal").innerHTML = '<div class="loading-spinner">Cargando profesionales...</div>';
     document.getElementById("directorioContainer").innerHTML = '<div class="loading-spinner">Cargando directorio...</div>';
@@ -633,6 +855,21 @@ async function inicializar() {
     profesionalesData = prof;
     preciosData = prec;
     jornalesData = jor;
+    
+    // Cargar todos los comentarios para contadores
+    const responseComments = await fetch(`${PROXY_URL}/api/comentarios`);
+    const csvComments = await responseComments.text();
+    const todosComentarios = parseCSV(csvComments);
+    contadorComentarios = {};
+    for (const coment of todosComentarios) {
+        const id = String(coment.id_profesional);
+        contadorComentarios[id] = (contadorComentarios[id] || 0) + 1;
+    }
+    for (const id in contadorComentarios) {
+        if (!comentariosCache[id]) {
+            comentariosCache[id] = todosComentarios.filter(c => String(c.id_profesional) === id);
+        }
+    }
     
     renderizarTopHorizontal();
     renderizarTablaPrecios();
