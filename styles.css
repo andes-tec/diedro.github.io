@@ -50,7 +50,12 @@ body {
 .logo-area {
     display: flex;
     align-items: center;
-    gap: 1rem;
+    gap: 0.8rem;
+    cursor: pointer;
+    transition: opacity 0.2s;
+}
+.logo-area:hover {
+    opacity: 0.9;
 }
 
 .logo-icon-wrapper {
@@ -86,6 +91,7 @@ body {
     border-radius: 2rem;
     font-size: 0.7rem;
     color: var(--gold);
+    white-space: nowrap;
 }
 
 .header-actions {
@@ -306,6 +312,7 @@ body {
     box-shadow: var(--shadow);
     border: 1px solid var(--gray);
     transition: 0.2s;
+    cursor: pointer;
 }
 
 .prof-horizontal-card:hover {
@@ -351,6 +358,7 @@ body {
     font-size: 0.7rem;
     text-decoration: none;
     margin-top: 0.5rem;
+    pointer-events: auto;
 }
 
 /* TARJETA PDF */
@@ -1650,16 +1658,42 @@ body {
         display: flex;
     }
     .main-header {
-        flex-direction: row;
-        flex-wrap: wrap;
-    }
-    .header-actions {
-        display: flex;
-        align-items: center;
+        flex-wrap: nowrap;
+        padding: 0.8rem 1rem;
         gap: 0.5rem;
     }
+    .logo-area {
+        gap: 0.4rem;
+        flex-shrink: 1;
+        min-width: 0;
+    }
+    .logo-icon-wrapper {
+        width: 32px;
+        height: 32px;
+    }
+    .logo-icon-wrapper i {
+        font-size: 1.2rem;
+    }
+    .logo-area h1 {
+        font-size: 1.1rem;
+        white-space: nowrap;
+    }
+    .gold-dot {
+        font-size: 1.2rem;
+    }
+    .badge-uocra {
+        font-size: 0.55rem;
+        padding: 0.2rem 0.4rem;
+        white-space: nowrap;
+    }
+    .header-actions {
+        margin-left: auto;
+    }
     .btn-profesional {
-        display: none; /* Se oculta en móvil, usamos flotante */
+        display: none;
+    }
+    .hamburger-menu {
+        font-size: 1.5rem;
     }
     .cotizador-grid {
         grid-template-columns: 1fr;
