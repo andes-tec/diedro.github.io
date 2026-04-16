@@ -1646,7 +1646,13 @@ body {
 
 @media (max-width: 768px) {
     body {
-        padding: 0.5rem;
+        padding: 0;
+        margin: 0;
+    }
+    .app-container {
+        border-radius: 0;
+        margin: 0;
+        padding-top: 70px; /* altura aproximada del header fijo */
     }
     .desktop-tabs {
         display: none;
@@ -1656,11 +1662,28 @@ body {
     }
     .mobile-menu.show {
         display: flex;
+        position: fixed;
+        top: 60px; /* debajo del header fijo */
+        left: 0;
+        right: 0;
+        z-index: 999;
+        background: var(--navy);
+        border-bottom: 1px solid var(--gold);
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
     }
+    /* HEADER FIJO EN MÓVIL */
     .main-header {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        z-index: 1001;
+        background: var(--navy);
         flex-wrap: nowrap;
         padding: 0.8rem 1rem;
         gap: 0.5rem;
+        margin: 0;
+        border-radius: 0;
     }
     .logo-area {
         gap: 0.4rem;
@@ -1668,14 +1691,14 @@ body {
         min-width: 0;
     }
     .logo-icon-wrapper {
-        width: 32px;
-        height: 32px;
+        width: 42px;
+        height: 42px;
     }
     .logo-icon-wrapper i {
-        font-size: 1.2rem;
+        font-size: 2.2rem;
     }
     .logo-area h1 {
-        font-size: 1.1rem;
+        font-size: 2.1rem;
         white-space: nowrap;
     }
     .gold-dot {
@@ -1759,6 +1782,7 @@ body {
     }
     .main-content {
         padding: 1rem;
+        margin-top: 0; /* ya hay padding-top en app-container */
     }
 }
 
