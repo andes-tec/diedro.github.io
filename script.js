@@ -1,6 +1,6 @@
 // ================= CONFIGURACIÓN: Proxy Cloudflare Workers =================
 const PROXY_URL = "https://diedro-proxy.aquilesdesarrollo.workers.dev"; // ⚠️ WORKER
-const SECRET_API_KEY = "D13dr0S3cr3tK3y2025"; // ⚠️ CONFIGURACION CLOUDFLARE
+const SECRET_API_KEY = "d13dr0S3cr3tK3y2025"; // ⚠️ CONFIGURACION CLOUDFLARE
 
 // ================= VARIABLES GLOBALES =================
 let profesionalesData = [];
