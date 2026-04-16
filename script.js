@@ -1,6 +1,6 @@
 // ================= CONFIGURACIÓN: Proxy Cloudflare Workers =================
-const PROXY_URL = "https://diedro-proxy.aquilesdesarrollo.workers.dev"; // ⚠️ WORKER
-const SECRET_API_KEY = "d13dr0S3cr3tK3y2025"; // ⚠️ CONFIGURACION CLOUDFLARE
+const PROXY_URL = "https://diedro-proxy.aquilesdesarrollo.workers.dev"; //  WORKER
+const SECRET_API_KEY = "d13dr0S3cr3tK3y2025"; //  CONFIGURACION CLOUDFLARE
 
 // ================= VARIABLES GLOBALES =================
 let profesionalesData = [];
@@ -477,21 +477,33 @@ function cerrarModal() {
     modal.classList.remove('dark');
 }
 
-// ================= TOP HORIZONTAL =================
+// ================= TOP HORIZONTAL (modificado para abrir modal) =================
 function renderizarTopHorizontal() {
     const container = document.getElementById("topProfesionalesHorizontal");
     if (!container) return;
     const top = [...profesionalesData].sort((a,b) => b.puntos - a.puntos).slice(0,10);
     if (!top.length) { container.innerHTML = "<div class='loading-spinner'>No hay profesionales</div>"; return; }
+    
     container.innerHTML = top.map(prof => `
-        <div class="prof-horizontal-card">
+        <div class="prof-horizontal-card" data-id="${prof.id}">
             <img src="${prof.imagen}" class="prof-horizontal-img" onerror="this.src='https://via.placeholder.com/70?text=?'">
             <h4>${prof.nombre}</h4>
             <div class="prof-oficio">${prof.oficio}</div>
             <div class="prof-puntos"><i class="fas fa-coins"></i> ${prof.puntos} pts</div>
-            <a href="https://wa.me/${prof.whatsapp}?text=Hola%20${encodeURIComponent(prof.nombre)}" target="_blank" class="btn-wa-mini"><i class="fab fa-whatsapp"></i> Contactar</a>
+            <a href="https://wa.me/${prof.whatsapp}?text=Hola%20${encodeURIComponent(prof.nombre)}" target="_blank" class="btn-wa-mini" data-wa="true"><i class="fab fa-whatsapp"></i> Contactar</a>
         </div>
     `).join("");
+    
+    // Agregar evento de clic a cada tarjeta (excepto si se hace clic en el botón de WhatsApp)
+    document.querySelectorAll('.prof-horizontal-card').forEach(card => {
+        card.addEventListener('click', (e) => {
+            // Si el clic fue en el enlace de WhatsApp o en su interior, no abrir modal
+            if (e.target.closest('.btn-wa-mini')) return;
+            const id = card.dataset.id;
+            const profesional = profesionalesData.find(p => p.id == id);
+            if (profesional) abrirModal(profesional);
+        });
+    });
 }
 
 // ================= CALCULADORA =================
@@ -842,6 +854,20 @@ function setupEventListeners() {
             if (document.querySelector('.tab-btn.active')?.dataset.tab === 'directorio') renderizarDirectorioCompleto();
         }, 250);
     });
+
+    // Volver al inicio al hacer clic en el logo
+    const logoArea = document.getElementById('logoArea');
+    if (logoArea) {
+        logoArea.addEventListener('click', () => {
+            const inicioTab = document.querySelector('.tab-btn[data-tab="inicio"]');
+            const mobileInicioBtn = document.querySelector('.mobile-tab-btn[data-tab="inicio"]');
+            if (inicioTab) inicioTab.click();
+            if (mobileInicioBtn) mobileInicioBtn.click();
+            const mobileMenu = document.getElementById('mobileMenu');
+            if (mobileMenu) mobileMenu.classList.remove('show');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        });
+    }
 }
 
 // ================= INICIALIZACIÓN =================
