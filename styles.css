@@ -1063,14 +1063,14 @@ body {
 
 .modal-content {
     background-color: var(--white);
-    margin: 10% auto;
+    margin: 5% auto;
     padding: 0;
     border-radius: 1.5rem;
     width: 90%;
-    max-width: 500px;
+    max-width: 600px;
     position: relative;
     animation: modalFadeIn 0.3s ease;
-    max-height: 80vh;
+    max-height: 90vh;
     overflow-y: auto;
 }
 
@@ -1185,6 +1185,137 @@ body {
 
 .modal-whatsapp:hover {
     transform: scale(1.02);
+}
+
+/* SECCIÓN DE COMENTARIOS (modo dark) */
+.comentarios-section {
+    margin-top: 2rem;
+    border-top: 1px solid var(--gray);
+    padding-top: 1rem;
+}
+
+.comentarios-section h4 {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: var(--navy);
+    margin-bottom: 1rem;
+}
+
+.modal.dark .comentarios-section h4 {
+    color: var(--gold);
+}
+
+.lista-comentarios {
+    max-height: 200px;
+    overflow-y: auto;
+    background: var(--gray-light);
+    border-radius: 1rem;
+    padding: 0.5rem;
+    margin-bottom: 1rem;
+}
+
+.comentario-item {
+    background: var(--white);
+    padding: 0.6rem;
+    border-radius: 0.8rem;
+    margin-bottom: 0.5rem;
+    border-left: 3px solid var(--gold);
+}
+
+.comentario-header {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.7rem;
+    color: var(--gray-dark);
+    margin-bottom: 0.3rem;
+}
+
+.comentario-nombre {
+    font-weight: 600;
+    color: var(--gold-dark);
+}
+
+.comentario-texto {
+    font-size: 0.85rem;
+    color: var(--navy);
+    word-break: break-word;
+}
+
+.comentario-fecha {
+    font-size: 0.65rem;
+}
+
+.form-comentario {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.form-comentario input,
+.form-comentario textarea {
+    padding: 0.6rem;
+    border: 1px solid var(--gray);
+    border-radius: 0.8rem;
+    font-family: inherit;
+    font-size: 0.85rem;
+    background: var(--white);
+    resize: vertical;
+}
+
+.form-comentario textarea {
+    min-height: 60px;
+}
+
+.form-comentario button {
+    background: var(--gold);
+    color: var(--navy);
+    border: none;
+    padding: 0.6rem;
+    border-radius: 2rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: 0.2s;
+}
+
+.form-comentario button:hover {
+    background: var(--gold-dark);
+    color: white;
+}
+
+/* Modo dark para el modal (cuando se abre desde la web que ya es dark) */
+.modal.dark .modal-content {
+    background: #1e293b;
+    color: #e2e8f0;
+}
+.modal.dark .modal-close {
+    background: #1e293b;
+    color: #e2e8f0;
+}
+.modal.dark .modal-profile-info h3,
+.modal.dark .modal-descripcion,
+.modal.dark .comentario-texto {
+    color: #e2e8f0;
+}
+.modal.dark .lista-comentarios {
+    background: #0f172a;
+}
+.modal.dark .comentario-item {
+    background: #1e293b;
+    border-left-color: var(--gold);
+}
+.modal.dark .comentario-header {
+    color: #94a3b8;
+}
+.modal.dark .form-comentario input,
+.modal.dark .form-comentario textarea {
+    background: #0f172a;
+    border-color: #334155;
+    color: #e2e8f0;
+}
+.modal.dark .form-comentario input::placeholder,
+.modal.dark .form-comentario textarea::placeholder {
+    color: #64748b;
 }
 
 /* FILTROS */
@@ -1645,4 +1776,32 @@ body {
     text-align: center;
     padding: 2rem;
     color: var(--gray-dark);
+}
+/* Contador de comentarios en tarjetas de directorio */
+.comentarios-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    background: rgba(251, 191, 36, 0.15);
+    padding: 0.2rem 0.6rem;
+    border-radius: 2rem;
+    font-size: 0.7rem;
+    color: var(--gold-dark);
+    margin-bottom: 0.8rem;
+}
+.comentarios-badge i {
+    font-size: 0.7rem;
+}
+.comentarios-count {
+    font-weight: bold;
+}
+/* Para móvil, ya está dentro de .compact-puntos */
+/* Hacer que el badge de comentarios sea clickeable */
+.comentarios-badge {
+    cursor: pointer;
+    transition: 0.2s;
+}
+.comentarios-badge:hover {
+    background: rgba(251, 191, 36, 0.3);
+    transform: scale(1.02);
 }
