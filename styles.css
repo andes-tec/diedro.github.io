@@ -446,8 +446,7 @@ body {
     color: white;
 }
 
-.banner-stats {
-    display: flex;
+.banner-stats {    
     justify-content: space-around;
     flex-wrap: wrap;
     gap: 1rem;
