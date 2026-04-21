@@ -172,10 +172,12 @@ async function enviarComentario(idProfesional, nombre, comentario) {
 }
 
 function actualizarContadorComentariosEnDirectorio(idProfesional, nuevoTotal) {
+    // Actualizar en tarjetas de escritorio
     document.querySelectorAll(`.profile-card[data-id="${idProfesional}"] .comentarios-count`).forEach(el => {
         el.textContent = nuevoTotal;
     });
-    document.querySelectorAll(`.profile-card-compact[data-id="${idProfesional}"] .comentarios-count`).forEach(el => {
+    // Actualizar en tarjetas compactas móvil
+    document.querySelectorAll(`.profile-card-compact[data-id="${idProfesional}"] .compact-comments-count`).forEach(el => {
         el.textContent = nuevoTotal;
     });
     const modalComentarioCount = document.querySelector(`#modalBody .comentarios-total-count`);
@@ -294,7 +296,7 @@ function renderizarTablaPrecios(filtro = "") {
             <td data-label="Diedro" class="diedro-cell">$${p.precioDiedro.toLocaleString('es-AR')}</td>
         </tr>`;
     });
-    html += `</tbody></table>`;
+    html += `</tbody> licensierad`;
     container.innerHTML = html;
 }
 
@@ -329,6 +331,7 @@ function renderizarDirectorioCompleto() {
 
     const isMobile = window.innerWidth <= 768;
     if (isMobile) {
+        // Versión móvil: tarjetas compactas con comentarios y puntos separados
         container.innerHTML = filtered.map(prof => {
             let oficioIcono = { "Albañil":"fas fa-hard-hat", "Arquitecto":"fas fa-drafting-compass", "Arquitecta":"fas fa-drafting-compass", "Electricista":"fas fa-bolt", "Ingeniero":"fas fa-calculator", "Plomero":"fas fa-wrench", "Pintor":"fas fa-paint-roller", "Yesero":"fas fa-gripfire", "Soldador":"fas fa-fire", "Contratista":"fas fa-handshake", "Ayudante":"fas fa-user-friends", "Canaletero":"fas fa-water", "Durlero":"fas fa-couch" }[prof.oficio] || "fas fa-user";
             const cantComentarios = contadorComentarios[prof.id] || 0;
@@ -340,9 +343,9 @@ function renderizarDirectorioCompleto() {
                         <div class="compact-oficio"><i class="${oficioIcono}"></i> ${prof.oficio}</div>
                         <div class="compact-zona"><i class="fas fa-map-marker-alt"></i> ${prof.zona}</div>
                     </div>
-                    <div class="compact-puntos">
-                        <i class="fas fa-comment"></i> <span class="comentarios-count">${cantComentarios}</span>
-                        ${prof.puntos} pts
+                    <div class="compact-stats">
+                        <span class="compact-comments"><i class="fas fa-comment"></i> <span class="compact-comments-count">${cantComentarios}</span></span>
+                        <span class="compact-points"><i class="fas fa-coins"></i> ${prof.puntos}</span>
                     </div>
                 </div>
             `;
@@ -355,6 +358,7 @@ function renderizarDirectorioCompleto() {
             });
         });
     } else {
+        // Versión escritorio (sin cambios)
         container.innerHTML = filtered.map(prof => {
             let estrellasHtml = ""; for (let i=1;i<=5;i++) estrellasHtml += i<=prof.estrellas ? '<i class="fas fa-star"></i>' : '<i class="far fa-star"></i>';
             let nivelTexto = "";
@@ -434,7 +438,6 @@ async function abrirModal(prof) {
         </div>
     `).join("");
     
-    // Construcción del modal con puntos y comentarios claramente separados
     modalBody.innerHTML = `
         <div class="modal-profile-header">
             <div class="modal-profile-image"><img src="${prof.imagen}" alt="${prof.nombre}" onerror="this.src='https://via.placeholder.com/80?text=?'"></div>
@@ -493,7 +496,6 @@ async function abrirModal(prof) {
             const nuevaCantidad = comentariosCache[id].length;
             contadorComentarios[id] = nuevaCantidad;
             
-            // Actualizar el badge de comentarios en el modal
             const badgeComentarios = modalBody.querySelector('.badge-comentarios');
             if (badgeComentarios) {
                 badgeComentarios.innerHTML = `<i class="fas fa-comment"></i> ${nuevaCantidad} comentario${nuevaCantidad !== 1 ? 's' : ''}`;
