@@ -10,10 +10,63 @@ let presupuestoItems = [];
 let comentariosCache = {};
 let contadorComentarios = {};
 
+// ================= SONIDOS (Web Audio API) =================
+let audioContext = null;
+
+async function reproducirSonido(tipo) {
+    try {
+        if (!audioContext) {
+            audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        }
+        if (audioContext.state === 'suspended') {
+            await audioContext.resume();
+        }
+        const now = audioContext.currentTime;
+        const osc = audioContext.createOscillator();
+        const gain = audioContext.createGain();
+        osc.connect(gain);
+        gain.connect(audioContext.destination);
+        
+        if (tipo === 'comentario') {
+            osc.frequency.value = 880;
+            gain.gain.setValueAtTime(0.2, now);
+            gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.8);
+            osc.start();
+            osc.stop(now + 0.5);
+            osc.frequency.setValueAtTime(880, now);
+            osc.frequency.exponentialRampToValueAtTime(1320, now + 0.2);
+        } else if (tipo === 'agregar') {
+            osc.frequency.value = 660;
+            gain.gain.setValueAtTime(0.15, now);
+            gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.3);
+            osc.start();
+            osc.stop(now + 0.2);
+            osc.frequency.exponentialRampToValueAtTime(440, now + 0.1);
+        }
+    } catch (e) {
+        console.warn("Error reproduciendo sonido:", e);
+    }
+}
+
 // ================= FUNCIÓN PARA DETECTAR NAVEGADOR DE FACEBOOK/INSTAGRAM =================
 function isFacebookBrowser() {
     const ua = navigator.userAgent || navigator.vendor || window.opera;
     return /FBAN|FBAV|FBIOS|FBDV|FB_IAB|Instagram|Messenger/i.test(ua);
+}
+
+// ================= TOAST MODERNO =================
+function mostrarToast(mensaje) {
+    const toastExistente = document.querySelector('.toast-message');
+    if (toastExistente) toastExistente.remove();
+    
+    const toast = document.createElement('div');
+    toast.className = 'toast-message';
+    toast.textContent = mensaje;
+    document.body.appendChild(toast);
+    
+    setTimeout(() => {
+        if (toast && toast.parentNode) toast.remove();
+    }, 2500);
 }
 
 // ================= FUNCIONES PARA CARGAR CSV (vía proxy) =================
@@ -368,8 +421,8 @@ async function abrirModal(prof) {
     let oficioIcono = { "Albañil":"fas fa-hard-hat", "Arquitecto":"fas fa-drafting-compass", "Arquitecta":"fas fa-drafting-compass", "Electricista":"fas fa-bolt", "Ingeniero":"fas fa-calculator", "Plomero":"fas fa-wrench", "Pintor":"fas fa-paint-roller", "Yesero":"fas fa-gripfire", "Soldador":"fas fa-fire", "Contratista":"fas fa-handshake", "Ayudante":"fas fa-user-friends", "Canaletero":"fas fa-water", "Durlero":"fas fa-couch" }[prof.oficio] || "fas fa-user";
     
     const comentarios = await cargarComentarios(prof.id);
-    const cantidad = comentarios.length;
-    contadorComentarios[prof.id] = cantidad;
+    const cantidadComentarios = comentarios.length;
+    contadorComentarios[prof.id] = cantidadComentarios;
     
     const comentariosHtml = comentarios.map(c => `
         <div class="comentario-item" data-fecha="${c.fecha}">
@@ -381,24 +434,27 @@ async function abrirModal(prof) {
         </div>
     `).join("");
     
+    // Construcción del modal con puntos y comentarios claramente separados
     modalBody.innerHTML = `
         <div class="modal-profile-header">
             <div class="modal-profile-image"><img src="${prof.imagen}" alt="${prof.nombre}" onerror="this.src='https://via.placeholder.com/80?text=?'"></div>
             <div class="modal-profile-info">
                 <h3><i class="fas fa-user-check"></i> ${prof.nombre}</h3>
                 <div class="modal-oficio"><i class="${oficioIcono}"></i> ${prof.oficio}</div>
-                <div class="modal-puntos"><i class="fas fa-coins"></i> ${prof.puntos} puntos - ${nivelTexto}</div>
+                <div class="modal-badges">
+                    <span class="badge-puntos"><i class="fas fa-coins"></i> ${prof.puntos} pts</span>
+                    <span class="badge-comentarios"><i class="fas fa-comment"></i> ${cantidadComentarios} comentario${cantidadComentarios !== 1 ? 's' : ''}</span>
+                </div>
             </div>
         </div>
         <div class="modal-zona"><i class="fas fa-map-marker-alt"></i> ${prof.zona}</div>
         <div class="modal-descripcion">${prof.descripcion}</div>
         <div class="modal-estrellas">${estrellasHtml} (${prof.estrellas}/5)</div>
+        <div class="modal-nivel">${nivelTexto}</div>
         <a href="https://wa.me/${prof.whatsapp}?text=Hola%20${encodeURIComponent(prof.nombre)}%2C%20vi%20tu%20perfil%20en%20Diedro" target="_blank" class="modal-whatsapp"><i class="fab fa-whatsapp"></i> Contactar por WhatsApp</a>
         
         <div class="comentarios-section">
-            <h4><i class="fas fa-comments"></i> Comentarios de clientes 
-                <span class="comentarios-total-count" data-id="${prof.id}" style="background:var(--gold); color:var(--navy); padding:0.1rem 0.5rem; border-radius:1rem; font-size:0.7rem;">${cantidad}</span>
-            </h4>
+            <h4><i class="fas fa-comments"></i> Comentarios de clientes</h4>
             <div class="lista-comentarios" id="listaComentarios_${prof.id}">
                 ${comentariosHtml || '<div class="comentario-item">No hay comentarios aún. Sé el primero en opinar.</div>'}
             </div>
@@ -427,6 +483,8 @@ async function abrirModal(prof) {
         const nuevoComentario = await enviarComentario(id, nombre, texto);
         
         if (nuevoComentario) {
+            reproducirSonido('comentario');
+            
             nombreInput.value = "";
             textoInput.value = "";
             
@@ -435,8 +493,11 @@ async function abrirModal(prof) {
             const nuevaCantidad = comentariosCache[id].length;
             contadorComentarios[id] = nuevaCantidad;
             
-            const contadorSpan = modalBody.querySelector('.comentarios-total-count');
-            if (contadorSpan) contadorSpan.textContent = nuevaCantidad;
+            // Actualizar el badge de comentarios en el modal
+            const badgeComentarios = modalBody.querySelector('.badge-comentarios');
+            if (badgeComentarios) {
+                badgeComentarios.innerHTML = `<i class="fas fa-comment"></i> ${nuevaCantidad} comentario${nuevaCantidad !== 1 ? 's' : ''}`;
+            }
             
             actualizarContadorComentariosEnDirectorio(id, nuevaCantidad);
             
@@ -552,6 +613,7 @@ function aplicarCalculoACotizador() {
     };
     presupuestoItems.push(item);
     actualizarListaPresupuesto();
+    reproducirSonido('agregar');
     document.querySelector('.tab-btn[data-tab="cotizador"]').click();
     alert(`Se agregó al presupuesto: ${item.tarea} por $${(diedroDiario*dias).toLocaleString('es-AR')}`);
 }
@@ -675,7 +737,6 @@ function generarPDFConvenio() {
     doc.setTextColor(100, 100, 120);
     doc.text("© 2026 Diedro - Costos actualizados mensualmente. Contacto: info@diedro.com", 105, 292, { align: "center" });
     
-    // Abrir en nueva pestaña (fallback si Facebook bloquea)
     const blob = doc.output('blob');
     const url = URL.createObjectURL(blob);
     const newWindow = window.open(url, '_blank');
@@ -692,9 +753,8 @@ function generarPDFConvenio() {
 }
 
 function generarPDFPresupuesto() {
-    if (!presupuestoItems.length) { alert("Agregá items al presupuesto."); return; }
+    if (!presupuestoItems.length) { mostrarToast("⚠️ No hay items en el presupuesto"); return; }
     
-    // Si está en Facebook, mostrar modal en lugar de intentar generar el PDF (que fallará)
     if (isFacebookBrowser()) {
         mostrarModalAbrirExterno();
         return;
@@ -778,9 +838,8 @@ function generarPDFPresupuesto() {
     setTimeout(() => URL.revokeObjectURL(url), 100);
 }
 
-// ================= MODAL PARA ABRIR EN NAVEGADOR EXTERNO (solo cuando se intenta descargar PDF) =================
+// ================= MODAL PARA ABRIR EN NAVEGADOR EXTERNO =================
 function mostrarModalAbrirExterno() {
-    // Creamos un modal flotante (no fijo que tape todo, sino centrado y semitransparente)
     const modal = document.createElement('div');
     modal.id = 'modalExterno';
     modal.style.cssText = `
@@ -817,7 +876,6 @@ function mostrarModalAbrirExterno() {
         mensaje = '📱 Para descargar el PDF, necesitás abrir esta página en Safari.<br><br>1. Tocá los tres puntos (⋯) arriba a la derecha.<br>2. Elegí "Abrir en Safari".';
         botonAccion = '<button id="cerrarModalBtn" style="background:#007aff; color:white; border:none; padding:10px 20px; border-radius:30px; margin-top:15px; font-weight:bold;">Entendido</button>';
     } else {
-        // Android: abrir directamente en Chrome con intent
         const currentUrl = window.location.href;
         const intentUrl = "intent://" + currentUrl.replace(/^https?:\/\//, '') + "#Intent;scheme=https;package=com.android.chrome;end;";
         mensaje = '📄 Para descargar el PDF, abriremos la página en Chrome automáticamente.';
@@ -825,8 +883,8 @@ function mostrarModalAbrirExterno() {
     }
     
     contenido.innerHTML = `
-        <div style="font-size:2rem; margin-bottom:0.5rem;">📄</div>
-        <h3 style="margin:0 0 0.5rem; color:#1a202c;">Descarga externa</h3>
+        <div style="font-size:2rem; margin-bottom:0.5rem;">📥</div>
+        <h3 style="margin:0 0 0.5rem; color:#1a202c;">Abrir en navegador</h3>
         <p style="color:#4a5568; font-size:0.9rem; line-height:1.4;">${mensaje}</p>
         ${botonAccion}
         <button id="cerrarModalBtnSec" style="background:transparent; border:none; color:#888; margin-top:12px; font-size:0.8rem; cursor:pointer;">Cerrar</button>
@@ -903,7 +961,6 @@ function setupEventListeners() {
         window.open(`https://wa.me/${numero}?text=${encodeURIComponent(mensaje)}`, "_blank");
     });
     
-    // Botón PDF con detección de Facebook
     const pdfBtn = document.getElementById('descargaPDFConvenioHero');
     if (pdfBtn) {
         pdfBtn.addEventListener('click', (e) => {
@@ -918,17 +975,29 @@ function setupEventListeners() {
     
     document.getElementById("agregarSeleccionadas")?.addEventListener("click", () => {
         const checks = document.querySelectorAll(".check-tarea:checked");
-        if (!checks.length) { alert("Seleccioná al menos una tarea."); return; }
+        if (!checks.length) {
+            mostrarToast("⚠️ Seleccioná al menos una tarea");
+            return;
+        }
+        let itemsAgregados = 0;
         checks.forEach(ch => {
             const tareaObj = JSON.parse(ch.dataset.tarea);
             let cantidad = parseFloat(prompt(`Cantidad para ${tareaObj.tarea}:`, "1"));
-            if (!isNaN(cantidad) && cantidad>0) {
+            if (!isNaN(cantidad) && cantidad > 0) {
                 const existe = presupuestoItems.find(i => i.id === tareaObj.id);
-                if(existe) existe.cantidad += cantidad;
+                if (existe) existe.cantidad += cantidad;
                 else presupuestoItems.push({ ...tareaObj, cantidad });
+                itemsAgregados++;
             }
         });
-        actualizarListaPresupuesto();
+        if (itemsAgregados > 0) {
+            actualizarListaPresupuesto();
+            reproducirSonido('agregar');
+            mostrarToast(`✅ ${itemsAgregados} tarea(s) agregada(s) al presupuesto`);
+            if (window.innerWidth <= 768) {
+                document.querySelector('.presupuesto-panel')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+        }
         document.querySelectorAll(".check-tarea:checked").forEach(ch => ch.checked = false);
     });
     
@@ -966,7 +1035,6 @@ function setupEventListeners() {
         }, 250);
     });
 
-    // Volver al inicio al hacer clic en el logo
     const logoArea = document.getElementById('logoArea');
     if (logoArea) {
         logoArea.addEventListener('click', () => {
@@ -993,7 +1061,6 @@ async function inicializar() {
     preciosData = prec;
     jornalesData = jor;
     
-    // Cargar todos los comentarios para contadores
     const responseComments = await fetch(`${PROXY_URL}/api/comentarios`);
     const csvComments = await responseComments.text();
     const todosComentarios = parseCSV(csvComments);
