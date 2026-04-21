@@ -1973,3 +1973,76 @@ body {
         visibility: hidden;
     }
 }
+/* Separación clara entre comentarios y puntos en tarjetas compactas (móvil) */
+.profile-card-compact {
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+    background: var(--white);
+    border-radius: 0.8rem;
+    padding: 0.8rem 1rem;
+    box-shadow: var(--shadow);
+    border-left: 3px solid var(--gold);
+    transition: all 0.2s ease;
+    cursor: pointer;
+}
+
+.compact-stats {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 0.3rem;
+    margin-left: auto;
+}
+
+.compact-comments,
+.compact-points {
+    font-size: 0.7rem;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    padding: 0.2rem 0.5rem;
+    border-radius: 2rem;
+    white-space: nowrap;
+}
+
+.compact-comments {
+    background: rgba(59, 130, 246, 0.1);
+    color: #2563eb;
+}
+
+.compact-points {
+    background: rgba(251, 191, 36, 0.2);
+    color: var(--gold-dark);
+}
+
+.compact-comments i,
+.compact-points i {
+    font-size: 0.65rem;
+}
+
+/* Badges en el modal para separar puntos y comentarios */
+.modal-badges {
+    display: flex;
+    gap: 0.8rem;
+    flex-wrap: wrap;
+    margin-top: 0.5rem;
+}
+
+.badge-puntos,
+.badge-comentarios {
+    background: rgba(251, 191, 36, 0.2);
+    padding: 0.2rem 0.6rem;
+    border-radius: 2rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+}
+
+.badge-puntos i,
+.badge-comentarios i {
+    font-size: 0.7rem;
+}
