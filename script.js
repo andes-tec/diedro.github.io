@@ -825,7 +825,7 @@ function mostrarModalAbrirExterno() {
     }
     
     contenido.innerHTML = `
-        <div style="font-size:2rem; margin-bottom:0.5rem;">⚠️</div>
+        <div style="font-size:2rem; margin-bottom:0.5rem;">📄</div>
         <h3 style="margin:0 0 0.5rem; color:#1a202c;">Descarga externa</h3>
         <p style="color:#4a5568; font-size:0.9rem; line-height:1.4;">${mensaje}</p>
         ${botonAccion}
