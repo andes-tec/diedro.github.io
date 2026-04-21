@@ -1423,6 +1423,49 @@ body {
     color: #f87171;
 }
 
+/* Ajustes para escritorio: botones siempre visibles */
+@media (min-width: 769px) {
+    .dark-cotizador .cotizador-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1.5rem;
+        align-items: start;
+    }
+    .dark-cotizador .tareas-panel,
+    .dark-cotizador .presupuesto-panel {
+        display: flex;
+        flex-direction: column;
+        overflow: visible;
+        height: auto;
+    }
+    .dark-cotizador .tareas-list {
+        max-height: 350px;
+        overflow-y: auto;
+        margin-bottom: 1rem;
+    }
+    .dark-cotizador .presupuesto-items {
+        flex: 1;
+        overflow-y: auto;
+        max-height: 300px;
+        margin-bottom: 1rem;
+    }
+    .dark-cotizador .totales-panel {
+        margin-top: auto;
+        margin-bottom: 1rem;
+    }
+    .dark-cotizador .btn-agregar,
+    .dark-cotizador .btn-pdf {
+        margin-top: 0;
+        flex-shrink: 0;
+    }
+    /* Aseguramos que el panel de presupuesto no crezca más allá de la pantalla */
+    .dark-cotizador .presupuesto-panel {
+        max-height: 80vh;
+        overflow-y: auto;
+    }
+}
+
+/* Estilos base del cotizador (sin modificar mucho) */
 .cotizador-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
@@ -1651,7 +1694,7 @@ body {
     .app-container {
         border-radius: 0;
         margin: 0;
-        padding-top: 70px; /* altura aproximada del header fijo */
+        padding-top: 70px;
     }
     .desktop-tabs {
         display: none;
@@ -1662,7 +1705,7 @@ body {
     .mobile-menu.show {
         display: flex;
         position: fixed;
-        top: 60px; /* debajo del header fijo */
+        top: 60px;
         left: 0;
         right: 0;
         z-index: 999;
@@ -1670,7 +1713,6 @@ body {
         border-bottom: 1px solid var(--gold);
         box-shadow: 0 4px 6px rgba(0,0,0,0.1);
     }
-    /* HEADER FIJO EN MÓVIL */
     .main-header {
         position: fixed;
         top: 0;
@@ -1781,7 +1823,40 @@ body {
     }
     .main-content {
         padding: 1rem;
-        margin-top: 0; /* ya hay padding-top en app-container */
+        margin-top: 0;
+    }
+
+    /* Ajustes móvil cotizador */
+    .cotizador-grid {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+    }
+    .tareas-panel {
+        max-height: 65vh;
+        overflow-y: auto;
+        margin-bottom: 0.5rem;
+    }
+    .presupuesto-panel {
+        max-height: 65vh;
+        overflow-y: auto;
+    }
+    .tareas-list {
+        max-height: 30vh;
+        overflow-y: auto;
+    }
+    /* En móvil también aseguramos que los totales y botón sean visibles */
+    .presupuesto-panel {
+        display: flex;
+        flex-direction: column;
+    }
+    .presupuesto-items {
+        flex: 1;
+        max-height: 45vh;
+        overflow-y: auto;
+    }
+    .totales-panel {
+        margin-top: auto;
     }
 }
 
@@ -1834,7 +1909,6 @@ body {
     padding: 2rem;
     color: var(--gray-dark);
 }
-/* Contador de comentarios en tarjetas de directorio */
 .comentarios-badge {
     display: inline-flex;
     align-items: center;
@@ -1852,8 +1926,6 @@ body {
 .comentarios-count {
     font-weight: bold;
 }
-/* Para móvil, ya está dentro de .compact-puntos */
-/* Hacer que el badge de comentarios sea clickeable */
 .comentarios-badge {
     cursor: pointer;
     transition: 0.2s;
@@ -1861,4 +1933,43 @@ body {
 .comentarios-badge:hover {
     background: rgba(251, 191, 36, 0.3);
     transform: scale(1.02);
+}
+
+/* Toast moderno */
+.toast-message {
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #1e293b;
+    color: #fbbf24;
+    padding: 12px 20px;
+    border-radius: 40px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    z-index: 10000;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    backdrop-filter: blur(8px);
+    white-space: nowrap;
+    font-family: system-ui, sans-serif;
+    animation: fadeInUp 0.3s ease, fadeOutDown 0.3s ease 2s forwards;
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translate(-50%, 20px);
+    }
+    to {
+        opacity: 1;
+        transform: translate(-50%, 0);
+    }
+}
+
+@keyframes fadeOutDown {
+    to {
+        opacity: 0;
+        transform: translate(-50%, 20px);
+        visibility: hidden;
+    }
 }
