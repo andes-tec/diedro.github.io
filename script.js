@@ -10,6 +10,12 @@ let presupuestoItems = [];
 let comentariosCache = {};
 let contadorComentarios = {};
 
+// ================= FUNCIÓN PARA DETECTAR NAVEGADOR DE FACEBOOK/INSTAGRAM =================
+function isFacebookBrowser() {
+    const ua = navigator.userAgent || navigator.vendor || window.opera;
+    return /FBAN|FBAV|FBIOS|FBDV|FB_IAB|Instagram|Messenger/i.test(ua);
+}
+
 // ================= FUNCIONES PARA CARGAR CSV (vía proxy) =================
 async function cargarCSV(url) {
     try {
@@ -477,7 +483,7 @@ function cerrarModal() {
     modal.classList.remove('dark');
 }
 
-// ================= TOP HORIZONTAL (modificado para abrir modal) =================
+// ================= TOP HORIZONTAL =================
 function renderizarTopHorizontal() {
     const container = document.getElementById("topProfesionalesHorizontal");
     if (!container) return;
@@ -494,10 +500,8 @@ function renderizarTopHorizontal() {
         </div>
     `).join("");
     
-    // Agregar evento de clic a cada tarjeta (excepto si se hace clic en el botón de WhatsApp)
     document.querySelectorAll('.prof-horizontal-card').forEach(card => {
         card.addEventListener('click', (e) => {
-            // Si el clic fue en el enlace de WhatsApp o en su interior, no abrir modal
             if (e.target.closest('.btn-wa-mini')) return;
             const id = card.dataset.id;
             const profesional = profesionalesData.find(p => p.id == id);
@@ -576,7 +580,7 @@ function actualizarTotales() {
     document.getElementById("totalDiedro").innerHTML = `$${totalD.toLocaleString('es-AR')}`;
 }
 
-// ================= PDF =================
+// ================= PDF - FUNCIONES MODIFICADAS =================
 function generarPDFConvenio() {
     const { jsPDF } = window.jspdf;
     const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
@@ -670,11 +674,32 @@ function generarPDFConvenio() {
     doc.setFontSize(7);
     doc.setTextColor(100, 100, 120);
     doc.text("© 2026 Diedro - Costos actualizados mensualmente. Contacto: info@diedro.com", 105, 292, { align: "center" });
-    doc.save(`Convenio_UOCRA_Diedro_${fecha.replace(/\//g, '-')}.pdf`);
+    
+    // Abrir en nueva pestaña (fallback si Facebook bloquea)
+    const blob = doc.output('blob');
+    const url = URL.createObjectURL(blob);
+    const newWindow = window.open(url, '_blank');
+    if (!newWindow || newWindow.closed || typeof newWindow.closed === 'undefined') {
+        alert('⚠️ Tu navegador bloqueó la apertura automática. Podés descargar haciendo clic derecho y "Guardar como" (o usando el menú del navegador).');
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `Convenio_UOCRA_Diedro_${fecha.replace(/\//g, '-')}.pdf`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+    }
+    setTimeout(() => URL.revokeObjectURL(url), 100);
 }
 
 function generarPDFPresupuesto() {
     if (!presupuestoItems.length) { alert("Agregá items al presupuesto."); return; }
+    
+    // Si está en Facebook, mostrar modal en lugar de intentar generar el PDF (que fallará)
+    if (isFacebookBrowser()) {
+        mostrarModalAbrirExterno();
+        return;
+    }
+    
     const { jsPDF } = window.jspdf;
     const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
     const fecha = new Date().toLocaleDateString('es-AR');
@@ -737,7 +762,83 @@ function generarPDFPresupuesto() {
     doc.setFontSize(7);
     doc.setTextColor(100, 100, 120);
     doc.text("© 2026 Diedro - Presupuesto válido por 30 días. Contacto: info@diedro.com", 105, 292, { align: "center" });
-    doc.save(`presupuesto_diedro_${fecha.replace(/\//g, '-')}.pdf`);
+    
+    const blob = doc.output('blob');
+    const url = URL.createObjectURL(blob);
+    const newWindow = window.open(url, '_blank');
+    if (!newWindow || newWindow.closed || typeof newWindow.closed === 'undefined') {
+        alert('⚠️ Tu navegador bloqueó la apertura automática. Podés descargar haciendo clic derecho y "Guardar como".');
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `presupuesto_diedro_${fecha.replace(/\//g, '-')}.pdf`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+    }
+    setTimeout(() => URL.revokeObjectURL(url), 100);
+}
+
+// ================= MODAL PARA ABRIR EN NAVEGADOR EXTERNO (solo cuando se intenta descargar PDF) =================
+function mostrarModalAbrirExterno() {
+    // Creamos un modal flotante (no fijo que tape todo, sino centrado y semitransparente)
+    const modal = document.createElement('div');
+    modal.id = 'modalExterno';
+    modal.style.cssText = `
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0,0,0,0.7);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 10000;
+        backdrop-filter: blur(3px);
+    `;
+    
+    const contenido = document.createElement('div');
+    contenido.style.cssText = `
+        background: white;
+        max-width: 90%;
+        width: 320px;
+        padding: 1.5rem;
+        border-radius: 1.5rem;
+        text-align: center;
+        box-shadow: 0 20px 30px rgba(0,0,0,0.3);
+        font-family: system-ui, sans-serif;
+    `;
+    
+    const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
+    let mensaje = '';
+    let botonAccion = '';
+    
+    if (isIOS) {
+        mensaje = '📱 Para descargar el PDF, necesitás abrir esta página en Safari.<br><br>1. Tocá los tres puntos (⋯) arriba a la derecha.<br>2. Elegí "Abrir en Safari".';
+        botonAccion = '<button id="cerrarModalBtn" style="background:#007aff; color:white; border:none; padding:10px 20px; border-radius:30px; margin-top:15px; font-weight:bold;">Entendido</button>';
+    } else {
+        // Android: abrir directamente en Chrome con intent
+        const currentUrl = window.location.href;
+        const intentUrl = "intent://" + currentUrl.replace(/^https?:\/\//, '') + "#Intent;scheme=https;package=com.android.chrome;end;";
+        mensaje = '📄 Para descargar el PDF, abriremos la página en Chrome automáticamente.';
+        botonAccion = `<a href="${intentUrl}" style="display:inline-block; background:#25D366; color:white; text-decoration:none; padding:10px 20px; border-radius:30px; margin-top:15px; font-weight:bold;">Abrir en Chrome →</a>`;
+    }
+    
+    contenido.innerHTML = `
+        <div style="font-size:2rem; margin-bottom:0.5rem;">⚠️</div>
+        <h3 style="margin:0 0 0.5rem; color:#1a202c;">Descarga externa</h3>
+        <p style="color:#4a5568; font-size:0.9rem; line-height:1.4;">${mensaje}</p>
+        ${botonAccion}
+        <button id="cerrarModalBtnSec" style="background:transparent; border:none; color:#888; margin-top:12px; font-size:0.8rem; cursor:pointer;">Cerrar</button>
+    `;
+    
+    modal.appendChild(contenido);
+    document.body.appendChild(modal);
+    
+    const cerrar = () => modal.remove();
+    document.getElementById('cerrarModalBtn')?.addEventListener('click', cerrar);
+    document.getElementById('cerrarModalBtnSec')?.addEventListener('click', cerrar);
+    modal.addEventListener('click', (e) => { if (e.target === modal) cerrar(); });
 }
 
 // ================= TABS Y MENÚ MÓVIL =================
@@ -802,8 +903,18 @@ function setupEventListeners() {
         window.open(`https://wa.me/${numero}?text=${encodeURIComponent(mensaje)}`, "_blank");
     });
     
-    const descargaHero = document.getElementById("descargaPDFConvenioHero");
-    if(descargaHero) descargaHero.addEventListener("click", (e) => { e.preventDefault(); generarPDFConvenio(); });
+    // Botón PDF con detección de Facebook
+    const pdfBtn = document.getElementById('descargaPDFConvenioHero');
+    if (pdfBtn) {
+        pdfBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            if (isFacebookBrowser()) {
+                mostrarModalAbrirExterno();
+            } else {
+                generarPDFConvenio();
+            }
+        });
+    }
     
     document.getElementById("agregarSeleccionadas")?.addEventListener("click", () => {
         const checks = document.querySelectorAll(".check-tarea:checked");
