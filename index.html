@@ -218,6 +218,32 @@
 
 <script src="script.js"></script>
 <script>
+  (function() {
+    // Detecta si el navegador es el de Facebook, Instagram, Messenger, etc.
+    const isFacebookApp = navigator.userAgent.match(/FBAN|FBAV|FBIOS|FBDV|FB_IAB|Instagram|Messenger/i);
+
+    if (isFacebookApp) {
+      // Guarda la URL actual (tu página)
+      const currentUrl = window.location.href;
+      
+      // Intenta redirigir al navegador externo usando el esquema de URL universal
+      // Esta es la URL mágica que intenta abrir el enlace en la app externa por defecto
+      window.location.href = "intent://" + currentUrl.replace(/^https?:\/\//, '') + "#Intent;scheme=https;package=com.android.chrome;end;";
+      
+      // Fallback para iOS: muestra una instrucción en pantalla si la redirección no funciona.
+      setTimeout(function() {
+        // Si después de 3 segundos el usuario sigue aquí, significa que la redirección no funcionó (probablemente iOS).
+        // Mostramos un mensaje amigable para que el usuario lo haga manualmente.
+        if (window.location.href === currentUrl) {
+          const messageDiv = document.createElement('div');
+          messageDiv.innerHTML = '<div style="position: fixed; top: 0; left: 0; right: 0; background: #000; color: #fff; text-align: center; padding: 15px; z-index: 9999;">⚠️ Para descargar el PDF, por favor, abre esta página en Chrome o Safari.<br>Toca los tres puntos (⋯) y elige "Abrir en navegador externo".</div>';
+          document.body.appendChild(messageDiv);
+        }
+      }, 3000);
+    }
+  })();
+</script>
+<script>
     // Manejo del botón "atrás" en móvil
     (function() {
         let allowExit = false;
