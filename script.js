@@ -9,6 +9,7 @@ let jornalesData = [];
 let presupuestoItems = [];
 let comentariosCache = {};
 let contadorComentarios = {};
+let dataLoaded = false; // Flag para saber si los datos principales ya se cargaron
 
 // ================= SONIDOS (Web Audio API) =================
 let audioContext = null;
@@ -294,7 +295,7 @@ function renderizarTablaPrecios(filtro = "") {
             <td data-label="Diedro" class="diedro-cell">$${p.precioDiedro.toLocaleString('es-AR')}</td>
         </tr>`;
     });
-    html += `</tbody><table>`;
+    html += `</tbody></table>`;
     container.innerHTML = html;
 }
 
@@ -640,7 +641,7 @@ function actualizarTotales() {
     document.getElementById("totalDiedro").innerHTML = `$${totalD.toLocaleString('es-AR')}`;
 }
 
-// ================= PDF - FUNCIONES MODIFICADAS CON DESCARGA AUTOMÁTICA EN EXTERNO =================
+// ================= PDF - FUNCIONES MEJORADAS =================
 
 // Guardar solicitud de descarga pendiente (para cuando se está en Facebook/Instagram)
 function guardarDescargaPendiente(tipo, datos = null) {
@@ -651,14 +652,14 @@ function guardarDescargaPendiente(tipo, datos = null) {
         timestamp: Date.now()
     };
     localStorage.setItem(key, JSON.stringify(item));
-    // Limpiar después de 5 minutos por si acaso
+    // Limpiar después de 10 minutos por si acaso
     setTimeout(() => {
         if (localStorage.getItem(key)) localStorage.removeItem(key);
-    }, 300000);
+    }, 600000);
 }
 
 // Procesar descarga pendiente al cargar la página (en el navegador externo)
-function procesarDescargaPendiente() {
+async function procesarDescargaPendiente() {
     const urlParams = new URLSearchParams(window.location.search);
     const downloadParam = urlParams.get('download');
     if (!downloadParam) return;
@@ -669,104 +670,44 @@ function procesarDescargaPendiente() {
     
     const key = `diedro_pendiente_${downloadParam}`;
     const pendiente = localStorage.getItem(key);
-    if (!pendiente) return;
+    if (!pendiente) {
+        console.warn("No se encontró solicitud pendiente");
+        return;
+    }
     
     localStorage.removeItem(key);
     const data = JSON.parse(pendiente);
     
-    // Pequeño retardo para asegurar que la página esté lista
-    setTimeout(() => {
-        if (data.tipo === 'convenio') {
-            generarPDFConvenio(true); // forzar generación sin comprobación de navegador
-        } else if (data.tipo === 'presupuesto') {
-            if (data.datos && data.datos.items) {
-                // Restaurar los items del presupuesto
-                presupuestoItems = data.datos.items;
-                generarPDFPresupuesto(true);
-            } else {
-                generarPDFPresupuesto(true);
-            }
+    // Esperar a que los datos estén cargados (precios, jornales, etc.)
+    if (!dataLoaded) {
+        // Esperar hasta que dataLoaded sea true (máximo 10 segundos)
+        let espera = 0;
+        while (!dataLoaded && espera < 100) {
+            await new Promise(r => setTimeout(r, 100));
+            espera++;
         }
-    }, 300);
-}
-
-// Función auxiliar para mostrar modal de redirección
-function mostrarModalRedireccion(urlDestino) {
-    const modal = document.createElement('div');
-    modal.id = 'modalRedireccion';
-    modal.style.cssText = `
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background: rgba(0,0,0,0.85);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        z-index: 10001;
-        backdrop-filter: blur(8px);
-    `;
-    
-    const contenido = document.createElement('div');
-    contenido.style.cssText = `
-        background: white;
-        max-width: 90%;
-        width: 320px;
-        padding: 1.5rem;
-        border-radius: 1.5rem;
-        text-align: center;
-        box-shadow: 0 20px 30px rgba(0,0,0,0.3);
-        font-family: system-ui, sans-serif;
-    `;
-    
-    const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
-    let mensaje = '';
-    let botonTexto = '';
-    
-    if (isIOS) {
-        mensaje = '📱 Para descargar el PDF, necesitás abrir esta página en Safari.<br><br>1. Tocá los tres puntos (⋯) arriba a la derecha.<br>2. Elegí "Abrir en Safari".';
-        botonTexto = 'Entendido, abrir en Safari';
-    } else {
-        mensaje = '📄 El PDF se generará automáticamente al abrir esta página en un navegador externo (Chrome).';
-        botonTexto = 'Abrir en navegador externo';
+        if (!dataLoaded) {
+            mostrarToast("Error: los datos aún no se cargaron. Recargá la página.");
+            return;
+        }
     }
     
-    contenido.innerHTML = `
-        <div style="font-size:2rem; margin-bottom:0.5rem;">📥</div>
-        <h3 style="margin:0 0 0.5rem; color:#1a202c;">Abrir en navegador</h3>
-        <p style="color:#4a5568; font-size:0.9rem; line-height:1.4;">${mensaje}</p>
-        <button id="btnRedirigir" style="background:#fbbf24; color:#1a202c; border:none; padding:10px 20px; border-radius:30px; margin-top:15px; font-weight:bold; width:100%;">${botonTexto}</button>
-        <button id="btnCerrarRedir" style="background:transparent; border:none; color:#888; margin-top:12px; font-size:0.8rem; cursor:pointer;">Cerrar</button>
-    `;
+    // Restaurar el presupuesto si es necesario
+    if (data.tipo === 'presupuesto' && data.datos && data.datos.items) {
+        presupuestoItems = data.datos.items;
+        // Actualizar la interfaz (por si acaso)
+        actualizarListaPresupuesto();
+    }
     
-    modal.appendChild(contenido);
-    document.body.appendChild(modal);
-    
-    const btnRedirigir = document.getElementById('btnRedirigir');
-    const btnCerrar = document.getElementById('btnCerrarRedir');
-    
-    const cerrar = () => modal.remove();
-    
-    btnRedirigir.addEventListener('click', () => {
-        cerrar();
-        if (isIOS) {
-            // En iOS, el usuario debe hacerlo manualmente, pero le damos instrucciones.
-            // No podemos abrir automáticamente, pero mostramos el mensaje.
-            alert('Abrí esta página en Safari tocando los tres puntos y seleccionando "Abrir en Safari".');
-        } else {
-            // Android: usar intent para abrir en Chrome
-            const currentUrl = window.location.href;
-            const intentUrl = "intent://" + currentUrl.replace(/^https?:\/\//, '') + "#Intent;scheme=https;package=com.android.chrome;end;";
-            window.location.href = intentUrl;
-        }
-    });
-    
-    btnCerrar.addEventListener('click', cerrar);
-    modal.addEventListener('click', (e) => { if (e.target === modal) cerrar(); });
+    // Generar y descargar el PDF directamente
+    if (data.tipo === 'convenio') {
+        generarPDFConvenio(true);
+    } else if (data.tipo === 'presupuesto') {
+        generarPDFPresupuesto(true);
+    }
 }
 
-// Modificación de generarPDFConvenio
+// Generar PDF de convenio (sin ventana emergente, usando doc.save)
 function generarPDFConvenio(forzar = false) {
     if (!forzar && isFacebookBrowser()) {
         // Guardar solicitud pendiente
@@ -778,7 +719,6 @@ function generarPDFConvenio(forzar = false) {
         return;
     }
     
-    // Generación normal del PDF
     const { jsPDF } = window.jspdf;
     const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
     const fecha = new Date().toLocaleDateString('es-AR');
@@ -872,19 +812,9 @@ function generarPDFConvenio(forzar = false) {
     doc.setTextColor(100, 100, 120);
     doc.text("© 2026 Diedro - Costos actualizados mensualmente. Contacto: info@diedro.com", 105, 292, { align: "center" });
     
-    const blob = doc.output('blob');
-    const url = URL.createObjectURL(blob);
-    const newWindow = window.open(url, '_blank');
-    if (!newWindow || newWindow.closed || typeof newWindow.closed === 'undefined') {
-        alert('⚠️ Tu navegador bloqueó la apertura automática. Podés descargar haciendo clic derecho y "Guardar como" (o usando el menú del navegador).');
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `Convenio_UOCRA_Diedro_${fecha.replace(/\//g, '-')}.pdf`;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-    }
-    setTimeout(() => URL.revokeObjectURL(url), 100);
+    // Descarga directa
+    doc.save(`Convenio_UOCRA_Diedro_${fecha.replace(/\//g, '-')}.pdf`);
+    mostrarToast("✅ PDF descargado correctamente");
 }
 
 function generarPDFPresupuesto(forzar = false) {
@@ -966,19 +896,83 @@ function generarPDFPresupuesto(forzar = false) {
     doc.setTextColor(100, 100, 120);
     doc.text("© 2026 Diedro - Presupuesto válido por 30 días. Contacto: info@diedro.com", 105, 292, { align: "center" });
     
-    const blob = doc.output('blob');
-    const url = URL.createObjectURL(blob);
-    const newWindow = window.open(url, '_blank');
-    if (!newWindow || newWindow.closed || typeof newWindow.closed === 'undefined') {
-        alert('⚠️ Tu navegador bloqueó la apertura automática. Podés descargar haciendo clic derecho y "Guardar como".');
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `presupuesto_diedro_${fecha.replace(/\//g, '-')}.pdf`;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
+    // Descarga directa
+    doc.save(`presupuesto_diedro_${fecha.replace(/\//g, '-')}.pdf`);
+    mostrarToast("✅ Presupuesto descargado correctamente");
+}
+
+// Modal de redirección (se mantiene igual)
+function mostrarModalRedireccion(urlDestino) {
+    const modal = document.createElement('div');
+    modal.id = 'modalRedireccion';
+    modal.style.cssText = `
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0,0,0,0.85);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 10001;
+        backdrop-filter: blur(8px);
+    `;
+    
+    const contenido = document.createElement('div');
+    contenido.style.cssText = `
+        background: white;
+        max-width: 90%;
+        width: 320px;
+        padding: 1.5rem;
+        border-radius: 1.5rem;
+        text-align: center;
+        box-shadow: 0 20px 30px rgba(0,0,0,0.3);
+        font-family: system-ui, sans-serif;
+    `;
+    
+    const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
+    let mensaje = '';
+    let botonTexto = '';
+    
+    if (isIOS) {
+        mensaje = '📱 Para descargar el PDF, necesitás abrir esta página en Safari.<br><br>1. Tocá los tres puntos (⋯) arriba a la derecha.<br>2. Elegí "Abrir en Safari".';
+        botonTexto = 'Entendido, abrir en Safari';
+    } else {
+        mensaje = '📄 El PDF se generará automáticamente al abrir esta página en un navegador externo (Chrome).';
+        botonTexto = 'Abrir en navegador externo';
     }
-    setTimeout(() => URL.revokeObjectURL(url), 100);
+    
+    contenido.innerHTML = `
+        <div style="font-size:2rem; margin-bottom:0.5rem;">📥</div>
+        <h3 style="margin:0 0 0.5rem; color:#1a202c;">Abrir en navegador</h3>
+        <p style="color:#4a5568; font-size:0.9rem; line-height:1.4;">${mensaje}</p>
+        <button id="btnRedirigir" style="background:#fbbf24; color:#1a202c; border:none; padding:10px 20px; border-radius:30px; margin-top:15px; font-weight:bold; width:100%;">${botonTexto}</button>
+        <button id="btnCerrarRedir" style="background:transparent; border:none; color:#888; margin-top:12px; font-size:0.8rem; cursor:pointer;">Cerrar</button>
+    `;
+    
+    modal.appendChild(contenido);
+    document.body.appendChild(modal);
+    
+    const btnRedirigir = document.getElementById('btnRedirigir');
+    const btnCerrar = document.getElementById('btnCerrarRedir');
+    
+    const cerrar = () => modal.remove();
+    
+    btnRedirigir.addEventListener('click', () => {
+        cerrar();
+        if (isIOS) {
+            alert('Abrí esta página en Safari tocando los tres puntos y seleccionando "Abrir en Safari".');
+        } else {
+            // Android: usar intent para abrir en Chrome
+            const currentUrl = window.location.href;
+            const intentUrl = "intent://" + currentUrl.replace(/^https?:\/\//, '') + "#Intent;scheme=https;package=com.android.chrome;end;";
+            window.location.href = intentUrl;
+        }
+    });
+    
+    btnCerrar.addEventListener('click', cerrar);
+    modal.addEventListener('click', (e) => { if (e.target === modal) cerrar(); });
 }
 
 // ================= TABS Y MENÚ MÓVIL =================
@@ -1130,8 +1124,7 @@ function setupEventListeners() {
 // ================= INICIALIZACIÓN =================
 async function inicializar() {
     // Procesar descarga pendiente (si venimos de un navegador externo)
-    procesarDescargaPendiente();
-    
+    // Primero cargamos datos, luego procesamos
     document.getElementById("topProfesionalesHorizontal").innerHTML = '<div class="loading-spinner">Cargando profesionales...</div>';
     document.getElementById("directorioContainer").innerHTML = '<div class="loading-spinner">Cargando directorio...</div>';
     document.getElementById("tablaPreciosContainer").innerHTML = '<div class="loading-spinner">Cargando precios...</div>';
@@ -1165,6 +1158,12 @@ async function inicializar() {
     initTabs();
     initMobileMenu();
     setupEventListeners();
+    
+    // Marcar que los datos están listos
+    dataLoaded = true;
+    
+    // Ahora sí, procesar descarga pendiente (si la hay)
+    await procesarDescargaPendiente();
 }
 
 document.addEventListener("DOMContentLoaded", inicializar);
