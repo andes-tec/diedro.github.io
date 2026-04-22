@@ -172,11 +172,9 @@ async function enviarComentario(idProfesional, nombre, comentario) {
 }
 
 function actualizarContadorComentariosEnDirectorio(idProfesional, nuevoTotal) {
-    // Actualizar en tarjetas de escritorio
     document.querySelectorAll(`.profile-card[data-id="${idProfesional}"] .comentarios-count`).forEach(el => {
         el.textContent = nuevoTotal;
     });
-    // Actualizar en tarjetas compactas móvil
     document.querySelectorAll(`.profile-card-compact[data-id="${idProfesional}"] .compact-comments-count`).forEach(el => {
         el.textContent = nuevoTotal;
     });
@@ -296,7 +294,7 @@ function renderizarTablaPrecios(filtro = "") {
             <td data-label="Diedro" class="diedro-cell">$${p.precioDiedro.toLocaleString('es-AR')}</td>
         </tr>`;
     });
-    html += `</tbody> licensierad`;
+    html += `</tbody><table>`;
     container.innerHTML = html;
 }
 
@@ -331,7 +329,6 @@ function renderizarDirectorioCompleto() {
 
     const isMobile = window.innerWidth <= 768;
     if (isMobile) {
-        // Versión móvil: tarjetas compactas con comentarios y puntos separados
         container.innerHTML = filtered.map(prof => {
             let oficioIcono = { "Albañil":"fas fa-hard-hat", "Arquitecto":"fas fa-drafting-compass", "Arquitecta":"fas fa-drafting-compass", "Electricista":"fas fa-bolt", "Ingeniero":"fas fa-calculator", "Plomero":"fas fa-wrench", "Pintor":"fas fa-paint-roller", "Yesero":"fas fa-gripfire", "Soldador":"fas fa-fire", "Contratista":"fas fa-handshake", "Ayudante":"fas fa-user-friends", "Canaletero":"fas fa-water", "Durlero":"fas fa-couch" }[prof.oficio] || "fas fa-user";
             const cantComentarios = contadorComentarios[prof.id] || 0;
@@ -358,7 +355,6 @@ function renderizarDirectorioCompleto() {
             });
         });
     } else {
-        // Versión escritorio (sin cambios)
         container.innerHTML = filtered.map(prof => {
             let estrellasHtml = ""; for (let i=1;i<=5;i++) estrellasHtml += i<=prof.estrellas ? '<i class="fas fa-star"></i>' : '<i class="far fa-star"></i>';
             let nivelTexto = "";
@@ -644,8 +640,145 @@ function actualizarTotales() {
     document.getElementById("totalDiedro").innerHTML = `$${totalD.toLocaleString('es-AR')}`;
 }
 
-// ================= PDF - FUNCIONES MODIFICADAS =================
-function generarPDFConvenio() {
+// ================= PDF - FUNCIONES MODIFICADAS CON DESCARGA AUTOMÁTICA EN EXTERNO =================
+
+// Guardar solicitud de descarga pendiente (para cuando se está en Facebook/Instagram)
+function guardarDescargaPendiente(tipo, datos = null) {
+    const key = `diedro_pendiente_${tipo}`;
+    const item = {
+        tipo: tipo,
+        datos: datos,
+        timestamp: Date.now()
+    };
+    localStorage.setItem(key, JSON.stringify(item));
+    // Limpiar después de 5 minutos por si acaso
+    setTimeout(() => {
+        if (localStorage.getItem(key)) localStorage.removeItem(key);
+    }, 300000);
+}
+
+// Procesar descarga pendiente al cargar la página (en el navegador externo)
+function procesarDescargaPendiente() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const downloadParam = urlParams.get('download');
+    if (!downloadParam) return;
+    
+    // Eliminar el parámetro de la URL sin recargar
+    const newUrl = window.location.href.split('?')[0];
+    window.history.replaceState({}, document.title, newUrl);
+    
+    const key = `diedro_pendiente_${downloadParam}`;
+    const pendiente = localStorage.getItem(key);
+    if (!pendiente) return;
+    
+    localStorage.removeItem(key);
+    const data = JSON.parse(pendiente);
+    
+    // Pequeño retardo para asegurar que la página esté lista
+    setTimeout(() => {
+        if (data.tipo === 'convenio') {
+            generarPDFConvenio(true); // forzar generación sin comprobación de navegador
+        } else if (data.tipo === 'presupuesto') {
+            if (data.datos && data.datos.items) {
+                // Restaurar los items del presupuesto
+                presupuestoItems = data.datos.items;
+                generarPDFPresupuesto(true);
+            } else {
+                generarPDFPresupuesto(true);
+            }
+        }
+    }, 300);
+}
+
+// Función auxiliar para mostrar modal de redirección
+function mostrarModalRedireccion(urlDestino) {
+    const modal = document.createElement('div');
+    modal.id = 'modalRedireccion';
+    modal.style.cssText = `
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0,0,0,0.85);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 10001;
+        backdrop-filter: blur(8px);
+    `;
+    
+    const contenido = document.createElement('div');
+    contenido.style.cssText = `
+        background: white;
+        max-width: 90%;
+        width: 320px;
+        padding: 1.5rem;
+        border-radius: 1.5rem;
+        text-align: center;
+        box-shadow: 0 20px 30px rgba(0,0,0,0.3);
+        font-family: system-ui, sans-serif;
+    `;
+    
+    const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
+    let mensaje = '';
+    let botonTexto = '';
+    
+    if (isIOS) {
+        mensaje = '📱 Para descargar el PDF, necesitás abrir esta página en Safari.<br><br>1. Tocá los tres puntos (⋯) arriba a la derecha.<br>2. Elegí "Abrir en Safari".';
+        botonTexto = 'Entendido, abrir en Safari';
+    } else {
+        mensaje = '📄 El PDF se generará automáticamente al abrir esta página en un navegador externo (Chrome).';
+        botonTexto = 'Abrir en navegador externo';
+    }
+    
+    contenido.innerHTML = `
+        <div style="font-size:2rem; margin-bottom:0.5rem;">📥</div>
+        <h3 style="margin:0 0 0.5rem; color:#1a202c;">Abrir en navegador</h3>
+        <p style="color:#4a5568; font-size:0.9rem; line-height:1.4;">${mensaje}</p>
+        <button id="btnRedirigir" style="background:#fbbf24; color:#1a202c; border:none; padding:10px 20px; border-radius:30px; margin-top:15px; font-weight:bold; width:100%;">${botonTexto}</button>
+        <button id="btnCerrarRedir" style="background:transparent; border:none; color:#888; margin-top:12px; font-size:0.8rem; cursor:pointer;">Cerrar</button>
+    `;
+    
+    modal.appendChild(contenido);
+    document.body.appendChild(modal);
+    
+    const btnRedirigir = document.getElementById('btnRedirigir');
+    const btnCerrar = document.getElementById('btnCerrarRedir');
+    
+    const cerrar = () => modal.remove();
+    
+    btnRedirigir.addEventListener('click', () => {
+        cerrar();
+        if (isIOS) {
+            // En iOS, el usuario debe hacerlo manualmente, pero le damos instrucciones.
+            // No podemos abrir automáticamente, pero mostramos el mensaje.
+            alert('Abrí esta página en Safari tocando los tres puntos y seleccionando "Abrir en Safari".');
+        } else {
+            // Android: usar intent para abrir en Chrome
+            const currentUrl = window.location.href;
+            const intentUrl = "intent://" + currentUrl.replace(/^https?:\/\//, '') + "#Intent;scheme=https;package=com.android.chrome;end;";
+            window.location.href = intentUrl;
+        }
+    });
+    
+    btnCerrar.addEventListener('click', cerrar);
+    modal.addEventListener('click', (e) => { if (e.target === modal) cerrar(); });
+}
+
+// Modificación de generarPDFConvenio
+function generarPDFConvenio(forzar = false) {
+    if (!forzar && isFacebookBrowser()) {
+        // Guardar solicitud pendiente
+        guardarDescargaPendiente('convenio', null);
+        // Construir URL con parámetro
+        const url = new URL(window.location.href);
+        url.searchParams.set('download', 'convenio');
+        mostrarModalRedireccion(url.toString());
+        return;
+    }
+    
+    // Generación normal del PDF
     const { jsPDF } = window.jspdf;
     const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
     const fecha = new Date().toLocaleDateString('es-AR');
@@ -754,11 +887,19 @@ function generarPDFConvenio() {
     setTimeout(() => URL.revokeObjectURL(url), 100);
 }
 
-function generarPDFPresupuesto() {
-    if (!presupuestoItems.length) { mostrarToast("⚠️ No hay items en el presupuesto"); return; }
+function generarPDFPresupuesto(forzar = false) {
+    if (!presupuestoItems.length && !forzar) {
+        mostrarToast("⚠️ No hay items en el presupuesto");
+        return;
+    }
     
-    if (isFacebookBrowser()) {
-        mostrarModalAbrirExterno();
+    if (!forzar && isFacebookBrowser()) {
+        // Guardar los items actuales
+        const itemsCopy = JSON.parse(JSON.stringify(presupuestoItems));
+        guardarDescargaPendiente('presupuesto', { items: itemsCopy });
+        const url = new URL(window.location.href);
+        url.searchParams.set('download', 'presupuesto');
+        mostrarModalRedireccion(url.toString());
         return;
     }
     
@@ -840,67 +981,6 @@ function generarPDFPresupuesto() {
     setTimeout(() => URL.revokeObjectURL(url), 100);
 }
 
-// ================= MODAL PARA ABRIR EN NAVEGADOR EXTERNO =================
-function mostrarModalAbrirExterno() {
-    const modal = document.createElement('div');
-    modal.id = 'modalExterno';
-    modal.style.cssText = `
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background: rgba(0,0,0,0.7);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        z-index: 10000;
-        backdrop-filter: blur(3px);
-    `;
-    
-    const contenido = document.createElement('div');
-    contenido.style.cssText = `
-        background: white;
-        max-width: 90%;
-        width: 320px;
-        padding: 1.5rem;
-        border-radius: 1.5rem;
-        text-align: center;
-        box-shadow: 0 20px 30px rgba(0,0,0,0.3);
-        font-family: system-ui, sans-serif;
-    `;
-    
-    const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
-    let mensaje = '';
-    let botonAccion = '';
-    
-    if (isIOS) {
-        mensaje = '📱 Para descargar el PDF, necesitás abrir esta página en Safari.<br><br>1. Tocá los tres puntos (⋯) arriba a la derecha.<br>2. Elegí "Abrir en Safari".';
-        botonAccion = '<button id="cerrarModalBtn" style="background:#007aff; color:white; border:none; padding:10px 20px; border-radius:30px; margin-top:15px; font-weight:bold;">Entendido</button>';
-    } else {
-        const currentUrl = window.location.href;
-        const intentUrl = "intent://" + currentUrl.replace(/^https?:\/\//, '') + "#Intent;scheme=https;package=com.android.chrome;end;";
-        mensaje = '📄 Para descargar el PDF, abriremos la página en Chrome automáticamente.';
-        botonAccion = `<a href="${intentUrl}" style="display:inline-block; background:#25D366; color:white; text-decoration:none; padding:10px 20px; border-radius:30px; margin-top:15px; font-weight:bold;">Abrir en Chrome →</a>`;
-    }
-    
-    contenido.innerHTML = `
-        <div style="font-size:2rem; margin-bottom:0.5rem;">📥</div>
-        <h3 style="margin:0 0 0.5rem; color:#1a202c;">Abrir en navegador</h3>
-        <p style="color:#4a5568; font-size:0.9rem; line-height:1.4;">${mensaje}</p>
-        ${botonAccion}
-        <button id="cerrarModalBtnSec" style="background:transparent; border:none; color:#888; margin-top:12px; font-size:0.8rem; cursor:pointer;">Cerrar</button>
-    `;
-    
-    modal.appendChild(contenido);
-    document.body.appendChild(modal);
-    
-    const cerrar = () => modal.remove();
-    document.getElementById('cerrarModalBtn')?.addEventListener('click', cerrar);
-    document.getElementById('cerrarModalBtnSec')?.addEventListener('click', cerrar);
-    modal.addEventListener('click', (e) => { if (e.target === modal) cerrar(); });
-}
-
 // ================= TABS Y MENÚ MÓVIL =================
 function initTabs() {
     const tabs = document.querySelectorAll('.tab-btn');
@@ -967,11 +1047,7 @@ function setupEventListeners() {
     if (pdfBtn) {
         pdfBtn.addEventListener('click', (e) => {
             e.preventDefault();
-            if (isFacebookBrowser()) {
-                mostrarModalAbrirExterno();
-            } else {
-                generarPDFConvenio();
-            }
+            generarPDFConvenio();
         });
     }
     
@@ -1008,7 +1084,7 @@ function setupEventListeners() {
         document.querySelectorAll(".tarea-item").forEach(item => item.style.display = item.innerText.toLowerCase().includes(term) ? "flex" : "none");
     });
     
-    document.getElementById("generarPDFBtn")?.addEventListener("click", generarPDFPresupuesto);
+    document.getElementById("generarPDFBtn")?.addEventListener("click", () => generarPDFPresupuesto());
     
     document.getElementById("searchPrecios")?.addEventListener("input", e => renderizarTablaPrecios(e.target.value));
     document.getElementById("searchJornales")?.addEventListener("input", e => renderizarTablaJornales(e.target.value));
@@ -1053,6 +1129,9 @@ function setupEventListeners() {
 
 // ================= INICIALIZACIÓN =================
 async function inicializar() {
+    // Procesar descarga pendiente (si venimos de un navegador externo)
+    procesarDescargaPendiente();
+    
     document.getElementById("topProfesionalesHorizontal").innerHTML = '<div class="loading-spinner">Cargando profesionales...</div>';
     document.getElementById("directorioContainer").innerHTML = '<div class="loading-spinner">Cargando directorio...</div>';
     document.getElementById("tablaPreciosContainer").innerHTML = '<div class="loading-spinner">Cargando precios...</div>';
