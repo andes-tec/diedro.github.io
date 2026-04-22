@@ -10,6 +10,7 @@ let presupuestoItems = [];
 let comentariosCache = {};
 let contadorComentarios = {};
 let dataLoaded = false; // Flag para saber si los datos principales ya se cargaron
+let redireccionIntentada = false; // Evitar redirección en bucle
 
 // ================= SONIDOS (Web Audio API) =================
 let audioContext = null;
@@ -53,6 +54,99 @@ async function reproducirSonido(tipo) {
 function isFacebookBrowser() {
     const ua = navigator.userAgent || navigator.vendor || window.opera;
     return /FBAN|FBAV|FBIOS|FBDV|FB_IAB|Instagram|Messenger/i.test(ua);
+}
+
+// ================= REDIRECCIÓN AUTOMÁTICA A NAVEGADOR EXTERNO =================
+function redirigirANavegadorExterno() {
+    // Si ya se intentó redirigir, no repetir
+    if (redireccionIntentada) return false;
+    
+    // Solo actuar si estamos dentro de Facebook/Instagram
+    if (!isFacebookBrowser()) return false;
+    
+    // Evitar redirección si ya hay un parámetro de redirección en la URL (para no loop)
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('ext') === '1') return false;
+    
+    redireccionIntentada = true;
+    
+    // Construir la URL actual con un parámetro que indique que ya se intentó
+    const currentUrl = window.location.href;
+    const separator = currentUrl.includes('?') ? '&' : '?';
+    const targetUrl = currentUrl + separator + 'ext=1';
+    
+    // Detectar sistema operativo
+    const isAndroid = /Android/i.test(navigator.userAgent);
+    const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
+    
+    if (isAndroid) {
+        // Para Android: usar intent:// para abrir en Chrome
+        // Convertir la URL a intent
+        const intentUrl = `intent://${targetUrl.replace(/^https?:\/\//, '')}#Intent;scheme=https;package=com.android.chrome;end;`;
+        window.location.href = intentUrl;
+        return true;
+    } else if (isIOS) {
+        // Para iOS no hay forma automática, mostramos modal con instrucciones
+        mostrarModalNavegadorIOS();
+        return false; // No redirige automáticamente, pero muestra el modal
+    }
+    
+    return false;
+}
+
+function mostrarModalNavegadorIOS() {
+    // Si ya existe un modal de este tipo, no duplicar
+    if (document.getElementById('modalRedireccionIOS')) return;
+    
+    const modal = document.createElement('div');
+    modal.id = 'modalRedireccionIOS';
+    modal.style.cssText = `
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0,0,0,0.9);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 10001;
+        backdrop-filter: blur(8px);
+    `;
+    
+    const contenido = document.createElement('div');
+    contenido.style.cssText = `
+        background: white;
+        max-width: 90%;
+        width: 320px;
+        padding: 1.8rem;
+        border-radius: 1.5rem;
+        text-align: center;
+        box-shadow: 0 20px 30px rgba(0,0,0,0.3);
+        font-family: system-ui, sans-serif;
+    `;
+    
+    contenido.innerHTML = `
+        <div style="font-size:2.5rem; margin-bottom:0.5rem;">📱</div>
+        <h3 style="margin:0 0 0.8rem; color:#1a202c;">Abrir en Safari</h3>
+        <p style="color:#4a5568; font-size:0.9rem; line-height:1.4;">
+            Para descargar los PDFs y usar el cotizador correctamente, necesitás abrir esta página en Safari.
+        </p>
+        <div style="background:#f3f4f6; border-radius:1rem; padding:0.8rem; margin:1rem 0; text-align:left;">
+            <p style="margin:0 0 0.5rem; font-weight:600;">📌 Pasos:</p>
+            <p style="margin:0 0 0.3rem;">1. Tocá los tres puntos <strong>⋯</strong> arriba a la derecha.</p>
+            <p style="margin:0;">2. Seleccioná <strong>"Abrir en Safari"</strong>.</p>
+        </div>
+        <button id="btnCerrarIOS" style="background:#fbbf24; color:#1a202c; border:none; padding:10px 20px; border-radius:30px; margin-top:10px; font-weight:bold; width:100%;">Entendido</button>
+    `;
+    
+    modal.appendChild(contenido);
+    document.body.appendChild(modal);
+    
+    const btnCerrar = document.getElementById('btnCerrarIOS');
+    btnCerrar.addEventListener('click', () => {
+        modal.remove();
+    });
 }
 
 // ================= TOAST MODERNO =================
@@ -680,7 +774,6 @@ async function procesarDescargaPendiente() {
     
     // Esperar a que los datos estén cargados (precios, jornales, etc.)
     if (!dataLoaded) {
-        // Esperar hasta que dataLoaded sea true (máximo 10 segundos)
         let espera = 0;
         while (!dataLoaded && espera < 100) {
             await new Promise(r => setTimeout(r, 100));
@@ -695,7 +788,6 @@ async function procesarDescargaPendiente() {
     // Restaurar el presupuesto si es necesario
     if (data.tipo === 'presupuesto' && data.datos && data.datos.items) {
         presupuestoItems = data.datos.items;
-        // Actualizar la interfaz (por si acaso)
         actualizarListaPresupuesto();
     }
     
@@ -710,12 +802,11 @@ async function procesarDescargaPendiente() {
 // Generar PDF de convenio (sin ventana emergente, usando doc.save)
 function generarPDFConvenio(forzar = false) {
     if (!forzar && isFacebookBrowser()) {
-        // Guardar solicitud pendiente
         guardarDescargaPendiente('convenio', null);
-        // Construir URL con parámetro
         const url = new URL(window.location.href);
         url.searchParams.set('download', 'convenio');
-        mostrarModalRedireccion(url.toString());
+        // Redirigir a navegador externo (si no se redirigió automáticamente)
+        redirigirANavegadorExterno();
         return;
     }
     
@@ -812,7 +903,6 @@ function generarPDFConvenio(forzar = false) {
     doc.setTextColor(100, 100, 120);
     doc.text("© 2026 Diedro - Costos actualizados mensualmente. Contacto: info@diedro.com", 105, 292, { align: "center" });
     
-    // Descarga directa
     doc.save(`Convenio_UOCRA_Diedro_${fecha.replace(/\//g, '-')}.pdf`);
     mostrarToast("✅ PDF descargado correctamente");
 }
@@ -824,12 +914,11 @@ function generarPDFPresupuesto(forzar = false) {
     }
     
     if (!forzar && isFacebookBrowser()) {
-        // Guardar los items actuales
         const itemsCopy = JSON.parse(JSON.stringify(presupuestoItems));
         guardarDescargaPendiente('presupuesto', { items: itemsCopy });
         const url = new URL(window.location.href);
         url.searchParams.set('download', 'presupuesto');
-        mostrarModalRedireccion(url.toString());
+        redirigirANavegadorExterno();
         return;
     }
     
@@ -896,83 +985,8 @@ function generarPDFPresupuesto(forzar = false) {
     doc.setTextColor(100, 100, 120);
     doc.text("© 2026 Diedro - Presupuesto válido por 30 días. Contacto: info@diedro.com", 105, 292, { align: "center" });
     
-    // Descarga directa
     doc.save(`presupuesto_diedro_${fecha.replace(/\//g, '-')}.pdf`);
     mostrarToast("✅ Presupuesto descargado correctamente");
-}
-
-// Modal de redirección (se mantiene igual)
-function mostrarModalRedireccion(urlDestino) {
-    const modal = document.createElement('div');
-    modal.id = 'modalRedireccion';
-    modal.style.cssText = `
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background: rgba(0,0,0,0.85);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        z-index: 10001;
-        backdrop-filter: blur(8px);
-    `;
-    
-    const contenido = document.createElement('div');
-    contenido.style.cssText = `
-        background: white;
-        max-width: 90%;
-        width: 320px;
-        padding: 1.5rem;
-        border-radius: 1.5rem;
-        text-align: center;
-        box-shadow: 0 20px 30px rgba(0,0,0,0.3);
-        font-family: system-ui, sans-serif;
-    `;
-    
-    const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
-    let mensaje = '';
-    let botonTexto = '';
-    
-    if (isIOS) {
-        mensaje = '📱 Para descargar el PDF, necesitás abrir esta página en Safari.<br><br>1. Tocá los tres puntos (⋯) arriba a la derecha.<br>2. Elegí "Abrir en Safari".';
-        botonTexto = 'Entendido, abrir en Safari';
-    } else {
-        mensaje = '📄 El PDF se generará automáticamente al abrir esta página en un navegador externo (Chrome).';
-        botonTexto = 'Abrir en navegador externo';
-    }
-    
-    contenido.innerHTML = `
-        <div style="font-size:2rem; margin-bottom:0.5rem;">📥</div>
-        <h3 style="margin:0 0 0.5rem; color:#1a202c;">Abrir en navegador</h3>
-        <p style="color:#4a5568; font-size:0.9rem; line-height:1.4;">${mensaje}</p>
-        <button id="btnRedirigir" style="background:#fbbf24; color:#1a202c; border:none; padding:10px 20px; border-radius:30px; margin-top:15px; font-weight:bold; width:100%;">${botonTexto}</button>
-        <button id="btnCerrarRedir" style="background:transparent; border:none; color:#888; margin-top:12px; font-size:0.8rem; cursor:pointer;">Cerrar</button>
-    `;
-    
-    modal.appendChild(contenido);
-    document.body.appendChild(modal);
-    
-    const btnRedirigir = document.getElementById('btnRedirigir');
-    const btnCerrar = document.getElementById('btnCerrarRedir');
-    
-    const cerrar = () => modal.remove();
-    
-    btnRedirigir.addEventListener('click', () => {
-        cerrar();
-        if (isIOS) {
-            alert('Abrí esta página en Safari tocando los tres puntos y seleccionando "Abrir en Safari".');
-        } else {
-            // Android: usar intent para abrir en Chrome
-            const currentUrl = window.location.href;
-            const intentUrl = "intent://" + currentUrl.replace(/^https?:\/\//, '') + "#Intent;scheme=https;package=com.android.chrome;end;";
-            window.location.href = intentUrl;
-        }
-    });
-    
-    btnCerrar.addEventListener('click', cerrar);
-    modal.addEventListener('click', (e) => { if (e.target === modal) cerrar(); });
 }
 
 // ================= TABS Y MENÚ MÓVIL =================
@@ -1123,8 +1137,9 @@ function setupEventListeners() {
 
 // ================= INICIALIZACIÓN =================
 async function inicializar() {
-    // Procesar descarga pendiente (si venimos de un navegador externo)
-    // Primero cargamos datos, luego procesamos
+    // Intentar redirigir a navegador externo inmediatamente (solo si es FB/IG y no se ha redirigido ya)
+    redirigirANavegadorExterno();
+    
     document.getElementById("topProfesionalesHorizontal").innerHTML = '<div class="loading-spinner">Cargando profesionales...</div>';
     document.getElementById("directorioContainer").innerHTML = '<div class="loading-spinner">Cargando directorio...</div>';
     document.getElementById("tablaPreciosContainer").innerHTML = '<div class="loading-spinner">Cargando precios...</div>';
@@ -1159,10 +1174,9 @@ async function inicializar() {
     initMobileMenu();
     setupEventListeners();
     
-    // Marcar que los datos están listos
     dataLoaded = true;
     
-    // Ahora sí, procesar descarga pendiente (si la hay)
+    // Procesar descarga pendiente (si venimos de una redirección)
     await procesarDescargaPendiente();
 }
 
